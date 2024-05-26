@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="20" height="20" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="SimpleGraphics32" tilewidth="32" tileheight="32">
+  <image source="simpleGraphics_tiles32x32_0.png" width="256" height="160"/>
+ </tileset>
+ <layer name="Maze" width="20" height="20">
+  <data encoding="base64" compression="zlib">
+   eJytlFEKwCAMQ3sF+7v733NfggtJjMNAmXOSvtXqqKpxOaa6vsL33fz0a1jXEMnc6pfmV2J+mH/Hh9+Yn2NsMk780lqyXKx+yjdZs+6vYkDOxM+J1U1xKr7dPib7m+jkf1Mu9pxy/ae4XI+r/lOc6I9y/ac4k/vg5MyqPIrPsf65D9z5cnmfxe9mvDwxDyQ=
+  </data>
+ </layer>
+ <objectgroup name="Sprites" width="20" height="20"/>
+ <layer name="Collision" width="20" height="20" visible="0">
+  <data encoding="base64" compression="zlib">
+   eJytkl0KACEIhL2I97/mPgXSzl+REO2ajF9jXVX9eK2Y3+g/yU/NBvk0V/Xnc/1ZID3nhztDeooR+ZzopV6iXsg/ppvUpJ6c3kVF8j6TmSZzvOFzPEzv1Mu5z35qjojr9o2jml0f9U1rHZ9iUeesD+NTrKlXe87pOr6X6wOGwxiz
+  </data>
+ </layer>
+</map>
