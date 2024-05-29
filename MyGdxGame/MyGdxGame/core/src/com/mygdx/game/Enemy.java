@@ -1,36 +1,65 @@
 package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
-public class Enemy extends Spaceship {
+public class Enemy {
+    MyGdxGame game;
+    Vector2 position;
+    float speed = 50f;
+    float stateTime;
 
-    private float speed = 50f;
+    Animation<TextureRegion> animationRight;
+    Animation<TextureRegion> animationLeft;
+    Animation<TextureRegion> animationUp;
+    Animation<TextureRegion> animationDown;
 
-    public Enemy(String texturePath) {
-        this.texture = new Texture(texturePath);
+    EnemyState currentState;
 
-        // Place it in the middle of the screen
-        this.x = Gdx.graphics.getWidth() + 100;
-        this.y = (Gdx.graphics.getHeight() - this.texture.getHeight()) / 2.0f;
+    public enum EnemyState {
+        MOVING_UP,
+        MOVING_DOWN,
+        PATROLLING,
+        BOOSTING,
+        CHASING,
+        DODGING,
+        FLEEING
+    }
 
-        this.currentState = Spaceship.STATE.PATROLLING;
+    public Enemy(Vector2 position, float speed, Animation<TextureRegion> animationRight, Animation<TextureRegion> animationLeft,
+                 Animation<TextureRegion> animationUp, Animation<TextureRegion> animationDown, MyGdxGame game) {
+        this.position = position;
+        this.speed = speed;
+        this.animationRight = animationRight;
+        this.animationLeft = animationLeft;
+        this.animationUp = animationUp;
+        this.animationDown = animationDown;
+        this.stateTime = 0.33f;
+        this.currentState = EnemyState.PATROLLING;
+        this.game = game;
+    }
+
+    public Vector2 getPosition() {
+        return position;
     }
 
     public float getAngle(Vector2 target) {
-        float angle = (float) Math.toDegrees(Math.atan2(target.y - this.getPosition().y, target.x - this.getPosition().x));
+        float angle = (float) Math.toDegrees(Math.atan2(target.y - this.position.y, target.x - this.position.x));
 
-        if(angle < 0){
+        if (angle < 0) {
             angle += 360;
         }
 
         return angle;
     }
 
-    public boolean canSeePlayer(Player player) {
-        float angle = this.getAngle(player.getPosition());
-        if (player.getPosition().x < this.x) {
+    public boolean canSeePlayer() {
+        Vector2 playerPosition = game.getPlayerPosition();
+        float angle = this.getAngle(playerPosition);
+        if (playerPosition.x < this.position.x) {
             if (angle > 170 && angle < 190) {
                 return true;
             }
@@ -38,56 +67,73 @@ public class Enemy extends Spaceship {
         return false;
     }
 
-    public float distanceFrom(Player player) {
-        return this.getPosition().dst(player.getPosition());
+    public void update(MyGdxGame game, float delta) {
+        stateTime += delta;
+
+        switch (this.currentState) {
+            case MOVING_UP:
+                this.position.y += this.speed * delta;
+                break;
+            case MOVING_DOWN:
+                this.position.y -= this.speed * delta;
+                break;
+            case PATROLLING:
+                this.position.x -= this.speed * delta;
+                break;
+            case BOOSTING:
+                this.position.x -= this.speed * delta * 5;
+                if (!this.canSeePlayer()) {
+                    this.currentState = EnemyState.PATROLLING;
+                }
+                break;
+            case CHASING:
+                if (this.position.y < game.getPlayerPosition().y)
+                    this.position.y += this.speed * delta;
+                if (this.position.y > game.getPlayerPosition().y)
+                    this.position.y -= this.speed * delta;
+                this.position.x -= this.speed * delta * 3;
+                if (!this.canSeePlayer()) {
+                    this.currentState = EnemyState.PATROLLING;
+                }
+                break;
+            case DODGING:
+                if (this.position.y < game.getPlayerPosition().y)
+                    this.position.y -= this.speed * delta * 3;
+                if (this.position.y > game.getPlayerPosition().y)
+                    this.position.y += this.speed * delta * 3;
+                this.position.x -= this.speed * delta;
+                break;
+            case FLEEING:
+                this.position.x += this.speed * delta * 5;
+                break;
+        }
     }
 
-    public void update(Player player) {
-        // Grab deltatime to calculate movement over time
-        float dt = Gdx.graphics.getDeltaTime();
+    public void render(SpriteBatch batch) {
 
-        switch(this.currentState) {
+        TextureRegion currentFrame;
+        switch (this.currentState) {
             case MOVING_UP:
+                currentFrame = animationUp.getKeyFrame(stateTime, true);
                 break;
-
             case MOVING_DOWN:
+                currentFrame = animationDown.getKeyFrame(stateTime, true);
                 break;
-
             case PATROLLING:
-                this.x -= this.speed * dt;
-                break;
-
             case BOOSTING:
-                this.x -= this.speed * dt * 5;
-                if (!this.canSeePlayer(player)) {
-                    this.currentState = STATE.PATROLLING;
-                }
-                break;
-
             case CHASING:
-                if (this.getPosition().y < player.getPosition().y)
-                    this.y += this.speed * dt;
-                if (this.getPosition().y > player.getPosition().y)
-                    this.y -= this.speed * dt;
-                this.x -= this.speed * dt *3;
-                if (!this.canSeePlayer(player)) {
-                    this.currentState = STATE.PATROLLING;
-                }
-                break;
-
             case DODGING:
-                if (this.getPosition().y < player.getPosition().y)
-                    this.y -= this.speed * dt * 3;
-                if (this.getPosition().y > player.getPosition().y)
-                    this.y += this.speed * dt * 3;
-                this.x -= this.speed * dt;
-                break;
-
             case FLEEING:
-                this.x += this.speed * dt * 5;
+                if (this.position.x > game.getPlayerPosition().x) {
+                    currentFrame = animationLeft.getKeyFrame(stateTime, true);
+                } else {
+                    currentFrame = animationRight.getKeyFrame(stateTime, true);
+                }
                 break;
             default:
-                // code block
+                currentFrame = animationRight.getKeyFrame(stateTime, true);
+                break;
         }
+        batch.draw(currentFrame, this.position.x, this.position.y);
     }
 }
