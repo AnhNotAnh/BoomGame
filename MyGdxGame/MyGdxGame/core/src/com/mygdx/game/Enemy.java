@@ -1,10 +1,14 @@
 package com.mygdx.game;
 
+import java.util.ArrayList;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Array;
 
 public class Enemy {
     MyGdxGame game;
@@ -67,44 +71,46 @@ public class Enemy {
         return false;
     }
 
-    public void update(MyGdxGame game, float delta) {
-        stateTime += delta;
+    public void update(Vector2 targetPosition) {
+        float dt = Gdx.graphics.getDeltaTime();
+        stateTime += dt;
+        
 
         switch (this.currentState) {
             case MOVING_UP:
-                this.position.y += this.speed * delta;
+                this.position.y += this.speed * dt;
                 break;
             case MOVING_DOWN:
-                this.position.y -= this.speed * delta;
+                this.position.y -= this.speed * dt;
                 break;
             case PATROLLING:
-                this.position.x -= this.speed * delta;
+                this.position.x -= this.speed * dt;
                 break;
             case BOOSTING:
-                this.position.x -= this.speed * delta * 5;
+                this.position.x -= this.speed * dt * 5;
                 if (!this.canSeePlayer()) {
                     this.currentState = EnemyState.PATROLLING;
                 }
                 break;
             case CHASING:
                 if (this.position.y < game.getPlayerPosition().y)
-                    this.position.y += this.speed * delta;
+                    this.position.y += this.speed * dt;
                 if (this.position.y > game.getPlayerPosition().y)
-                    this.position.y -= this.speed * delta;
-                this.position.x -= this.speed * delta * 3;
+                    this.position.y -= this.speed * dt;
+                this.position.x -= this.speed * dt * 3;
                 if (!this.canSeePlayer()) {
                     this.currentState = EnemyState.PATROLLING;
                 }
                 break;
             case DODGING:
                 if (this.position.y < game.getPlayerPosition().y)
-                    this.position.y -= this.speed * delta * 3;
+                    this.position.y -= this.speed * dt * 3;
                 if (this.position.y > game.getPlayerPosition().y)
-                    this.position.y += this.speed * delta * 3;
-                this.position.x -= this.speed * delta;
+                    this.position.y += this.speed * dt * 3;
+                this.position.x -= this.speed * dt;
                 break;
             case FLEEING:
-                this.position.x += this.speed * delta * 5;
+                this.position.x += this.speed * dt * 5;
                 break;
         }
     }
@@ -136,4 +142,18 @@ public class Enemy {
         }
         batch.draw(currentFrame, this.position.x, this.position.y);
     }
+
+
+    public void onTouchPlayer() {
+        game.killPlayer();
+
+        Vector2 playerPosition = game.getPlayerPosition();
+        Vector2 direction = position.cpy().sub(playerPosition);
+        position.add(direction.scl(speed * Gdx.graphics.getDeltaTime()));
+    }
+
+    public void onTouchWall() {
+       this.currentState = EnemyState.PATROLLING;
+    }
 }
+

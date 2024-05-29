@@ -5,12 +5,14 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
@@ -23,7 +25,7 @@ import java.util.Random;
 public class MyGdxGame extends ApplicationAdapter {
 
 
-	public enum GameState { PLAYING, COMPLETE };
+	public enum GameState { PLAYING, COMPLETE, GAMEOVER };
 
 	public static final float MOVEMENT_COOLDOWN_TIME = 0.3f;
 
@@ -71,8 +73,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	private static final int FRAME_ROWS = 1;
 
 	Enemy enemy;
-
-
+	MyGdxGame game;
 
 	//UI textures
 	Texture buttonSquareTexture;
@@ -304,6 +305,21 @@ public class MyGdxGame extends ApplicationAdapter {
 						} //Restrict movement for a moment
 					}
 				}
+				
+				//Enemy update
+				Vector2 enemyPosition = enemy.getPosition();
+				enemy.update(new Vector2(characterX, characterY));
+
+				// Check for collisions between the enemy and the player
+				if (enemyPosition.epsilonEquals(new Vector2(characterX, characterY), 0.1f)) {
+					enemy.onTouchPlayer();
+				}
+
+				// Check for collisions between the enemy and walls
+				//if (isWall(enemyPosition)) {
+					// Enemy has collided with a wall
+				//	enemy.onTouchWall();
+				//}
 
 				//Check if player has met the winning condition
 				if (characterX == 18 && characterY == 1) {
@@ -329,6 +345,7 @@ public class MyGdxGame extends ApplicationAdapter {
 			movementCooldown -= elapsedTime;
 	}
 
+
 	@Override
 	public void dispose () {
 		characterTexture.dispose();
@@ -342,6 +359,13 @@ public class MyGdxGame extends ApplicationAdapter {
 
 	public Vector2 getPlayerPosition() {
 		return  new Vector2(characterX * 32, characterY * 32);
+	}
+
+	public void killPlayer() {
+		gameState = GameState.GAMEOVER;
+
+		characterX = 0;
+		characterY = 0;
 	}
 
 }
