@@ -427,7 +427,7 @@ public class MyGdxGame extends ApplicationAdapter {
 					Vector2 enemyPosition = enemy.getPosition();
 					enemy.update(new Vector2(characterX, characterY));
 
-					if (enemyPosition.epsilonEquals(new Vector2(characterX, characterY), 0.1f)) {
+					if (enemyPosition.epsilonEquals(new Vector2(player.getPosition().x, player.getPosition().y), 0.1f)) {
 						killPlayer();
 					}
 
@@ -489,12 +489,14 @@ public class MyGdxGame extends ApplicationAdapter {
 	}
 
 	public void spawnNewEnemy() {
-		if (enemies.size >= 1 && enemies.size <= 2) {
+		if (enemies.size >= 1 && enemies.size <= 3) {
 			return;
 		}
 		MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
 		TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
 		// TODO: spawn inside the tiledMap, check if isWall() enemy cant spawn
+
+		enemy = new Enemy(player.getPosition(), 45f, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
 	}
 }
 
