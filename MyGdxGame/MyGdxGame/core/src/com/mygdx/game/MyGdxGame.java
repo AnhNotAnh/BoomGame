@@ -5,27 +5,23 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.maps.MapLayer;
-import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.math.Vector3;
-
-import java.util.Random;
+import com.badlogic.gdx.utils.Array;
 
 public class MyGdxGame extends ApplicationAdapter {
 
 
-	public enum GameState { PLAYING, COMPLETE, GAMEOVER };
+	public enum GameState { PLAYING, COMPLETE };
 
 	public static final float MOVEMENT_COOLDOWN_TIME = 0.3f;
 
@@ -55,29 +51,31 @@ public class MyGdxGame extends ApplicationAdapter {
 
 
 	//Enemy
-	Animation flyAnimationRight;
-	Animation flyAnimationLeft;
-	Animation flyAnimationFront;
-	Animation flyAnimationBack;
+	Animation enemyRightAnimation;
+	Animation enemyLeftAnimation;
+	Animation enemyFrontAnimation;
+	Animation enemyBackAnimation;
+	Animation enemyDeathAnimation;
 
-	TextureRegion currentFrame;
-	TextureRegion[] flyFramesRight;
-	TextureRegion[] flyFramesLeft;
-	TextureRegion[] flyFramesBack;
-	TextureRegion[] flyFramesFront;
+	TextureRegion[] enemyFrameRight;
+	TextureRegion[] enemyFrameLeft;
+	TextureRegion[] enemyFramesBack;
+	TextureRegion[] enemyFramesFront;
+	TextureRegion[] enemyFramesDeath;
+	Texture enemyDeath;
 	Texture enemyFlyRight;
 	Texture enemyFlyLeft;
 	Texture enemyFlyBack;
 	Texture enemyFlyFront;
 	SpriteBatch spriteBatch;
-	int frameIndex;
 	float stateTime;
 
 	private static final int FRAME_COLS = 3;
+	private static final int FRAME_COLSDEATH = 5;
 	private static final int FRAME_ROWS = 1;
 
+	Array<Enemy> enemies;
 	Enemy enemy;
-	MyGdxGame game;
 
 	//UI textures
 	Texture buttonSquareTexture;
@@ -122,6 +120,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		enemyFlyLeft = new Texture(Gdx.files.internal("enemies/fly-left.png"));
 		enemyFlyFront = new Texture(Gdx.files.internal("enemies/fly-front.png"));
 		enemyFlyBack = new Texture(Gdx.files.internal("enemies/fly-back.png"));
+		enemyDeath = new Texture(Gdx.files.internal("enemies/death-front.png"));
 
 		TextureRegion[][] tempRight = TextureRegion.split(enemyFlyRight, enemyFlyRight.getWidth()
 				/ FRAME_COLS, enemyFlyRight.getHeight() / FRAME_ROWS);
@@ -131,32 +130,45 @@ public class MyGdxGame extends ApplicationAdapter {
 				/ FRAME_COLS, enemyFlyFront.getHeight() / FRAME_ROWS);
 		TextureRegion[][] tempBack = TextureRegion.split(enemyFlyBack, enemyFlyBack.getWidth()
 				/ FRAME_COLS, enemyFlyBack.getHeight() / FRAME_ROWS);
+		TextureRegion[][] tempDeath = TextureRegion.split(enemyDeath, enemyDeath.getWidth()
+				/ FRAME_COLSDEATH, enemyDeath.getHeight() / FRAME_ROWS);
 
-		flyFramesRight = new TextureRegion[FRAME_COLS * FRAME_ROWS];
-		flyFramesLeft = new TextureRegion[FRAME_COLS * FRAME_ROWS];
-		flyFramesBack = new TextureRegion[FRAME_COLS * FRAME_ROWS];
-		flyFramesFront = new TextureRegion[FRAME_COLS * FRAME_ROWS];
+		enemyFrameRight = new TextureRegion[FRAME_COLS * FRAME_ROWS];
+		enemyFrameLeft = new TextureRegion[FRAME_COLS * FRAME_ROWS];
+		enemyFramesBack = new TextureRegion[FRAME_COLS * FRAME_ROWS];
+		enemyFramesFront = new TextureRegion[FRAME_COLS * FRAME_ROWS];
+		enemyFramesDeath = new TextureRegion[FRAME_COLSDEATH * FRAME_COLS];
 
 		int index = 0;
 		for (int i = 0; i < FRAME_ROWS; i++) {
 			for (int j = 0; j < FRAME_COLS; j++) {
-				flyFramesRight[index] = tempRight[i][j];
-				flyFramesLeft[index] = tempLeft[i][FRAME_COLS - j - 1];
-				flyFramesFront[index] = tempFront[i][j];
-				flyFramesBack[index] = tempBack[i][j];
+				enemyFrameRight[index] = tempRight[i][j];
+				enemyFrameLeft[index] = tempLeft[i][FRAME_COLS - j - 1];
+				enemyFramesFront[index] = tempFront[i][j];
+				enemyFramesBack[index] = tempBack[i][j];
+				index++;
+			}
+		}
+
+		for(int i = 0; i < FRAME_ROWS; i++){
+			for(int j = 0; j < FRAME_COLSDEATH; j++){
+				enemyFramesDeath[index] = tempDeath[i][j];
 				index++;
 			}
 		}
 
 		spriteBatch = new SpriteBatch();
-		flyAnimationRight = new Animation(0.5f, flyFramesRight);
-		flyAnimationLeft = new Animation(0.5f, flyFramesLeft);
-		flyAnimationFront = new Animation(0.5f, flyFramesFront);
-		flyAnimationBack = new Animation(0.5f, flyFramesBack);
+		enemyRightAnimation = new Animation(0.5f, enemyFrameRight);
+		enemyLeftAnimation = new Animation(0.5f, enemyFrameLeft);
+		enemyFrontAnimation = new Animation(0.5f, enemyFramesFront);
+		enemyBackAnimation = new Animation(0.5f, enemyFramesBack);
+		enemyDeathAnimation = new Animation(0.5f, enemyFramesDeath);
 		stateTime = 0.33f;
 
-		Vector2 enemyPosition = new Vector2(50, 50);
-		enemy = new Enemy(enemyPosition, 50f, flyAnimationRight, flyAnimationLeft, flyAnimationFront, flyAnimationBack, this);
+		//Vector2 enemyPosition = new Vector2(50, 50);
+		//enemy = new Enemy(enemyPosition, 50f, flyAnimationRight, flyAnimationLeft, flyAnimationFront, flyAnimationBack, this);
+		enemies = new Array<Enemy>();
+
 
 		// Buttons
 		float buttonSize = h * 0.2f;
@@ -230,7 +242,9 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		//Draw Enemy
 		spriteBatch.begin();
-		enemy.render(spriteBatch);
+		for(Enemy enemy : enemies){
+			enemy.render(spriteBatch);
+		}
 		spriteBatch.end();
 
 		//Draw player
@@ -366,6 +380,7 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		switch (gameState) {
 			case PLAYING:
+				spawnNewEnemy();
 				moveLeftButton.update(checkTouch, touchX, touchY);
 				moveRightButton.update(checkTouch, touchX, touchY);
 				moveDownButton.update(checkTouch, touchX, touchY);
@@ -394,10 +409,13 @@ public class MyGdxGame extends ApplicationAdapter {
 					TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
 
 					if ((moveX != 0 || moveY != 0)
-							&& moveX + player.getPosition().x >= 0 && moveX + player.getPosition().x < tileLayer.getWidth()
-							&& moveY + player.getPosition().y >= 0 && moveY + player.getPosition().y < tileLayer.getHeight()) {
+							&& moveX + player.getPosition().x >= 0
+							&& moveX + player.getPosition().x < tileLayer.getWidth()
+							&& moveY + player.getPosition().y >= 0
+							&& moveY + player.getPosition().y < tileLayer.getHeight()) {
 
-						TiledMapTileLayer.Cell targetCell = tileLayer.getCell((int) (player.getPosition().x + moveX), (int) (player.getPosition().y + moveY));
+						TiledMapTileLayer.Cell targetCell = tileLayer.getCell((int) (player.getPosition().x + moveX),
+								(int) (player.getPosition().y + moveY));
 						if (targetCell == null) {
 							camera.translate(moveX * 32, moveY * 32);
 							player.move((int) moveX, (int) moveY);
@@ -405,11 +423,14 @@ public class MyGdxGame extends ApplicationAdapter {
 					}
 				}
 
-				Vector2 enemyPosition = enemy.getPosition();
-				enemy.update(player.getPosition());
+				for (Enemy enemy : enemies) {
+					Vector2 enemyPosition = enemy.getPosition();
+					enemy.update(new Vector2(characterX, characterY));
 
-				if (enemyPosition.epsilonEquals(player.getPosition(), 0.1f)) {
-					enemy.onTouchPlayer();
+					if (enemyPosition.epsilonEquals(new Vector2(characterX, characterY), 0.1f)) {
+						killPlayer();
+					}
+
 				}
 
 				if (player.getPosition().x == 18 && player.getPosition().y == 1) {
@@ -433,7 +454,6 @@ public class MyGdxGame extends ApplicationAdapter {
 			player.reduceCooldown(elapsedTime);
 	}
 
-
 	@Override
 	public void dispose () {
 		characterTexture.dispose();
@@ -446,10 +466,12 @@ public class MyGdxGame extends ApplicationAdapter {
 	}
 
 	public boolean isWall(Vector2 position) {
-		//TODO Retrieve Collision layer
 		MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
-		TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
-		return true;
+		if (collisionLayer instanceof TiledMapTileLayer) {
+			TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
+			return tileLayer.getCell((int) position.x, (int) position.y) != null;
+		}
+		return false;
 	}
 
 	public Vector2 getPlayerPosition() {
@@ -457,10 +479,23 @@ public class MyGdxGame extends ApplicationAdapter {
 	}
 
 	public void killPlayer() {
-		gameState = GameState.GAMEOVER;
-
+		gameState = GameState.COMPLETE;
 		characterX = 0;
 		characterY = 0;
 	}
 
+	public void removeEnemy(Enemy enemy) {
+		enemies.removeValue(enemy, true);
+	}
+
+	public void spawnNewEnemy() {
+		if (enemies.size >= 1 && enemies.size <= 2) {
+			return;
+		}
+		MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
+		TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
+		// TODO: spawn inside the tiledMap, check if isWall() enemy cant spawn
+	}
 }
+
+

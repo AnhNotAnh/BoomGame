@@ -16,10 +16,12 @@ public class Enemy {
     float speed = 50f;
     float stateTime;
 
+
     Animation<TextureRegion> animationRight;
     Animation<TextureRegion> animationLeft;
-    Animation<TextureRegion> animationUp;
-    Animation<TextureRegion> animationDown;
+    Animation<TextureRegion> animationFront;
+    Animation<TextureRegion> animationBack;
+    Animation<TextureRegion> animationDeath;
 
     EnemyState currentState;
 
@@ -30,17 +32,19 @@ public class Enemy {
         BOOSTING,
         CHASING,
         DODGING,
-        FLEEING
+        FLEEING,
+        DIE,
     }
 
     public Enemy(Vector2 position, float speed, Animation<TextureRegion> animationRight, Animation<TextureRegion> animationLeft,
-                 Animation<TextureRegion> animationUp, Animation<TextureRegion> animationDown, MyGdxGame game) {
+                 Animation<TextureRegion> animationFront, Animation<TextureRegion> animationBack, Animation<TextureRegion> animationDeath, MyGdxGame game) {
         this.position = position;
         this.speed = speed;
         this.animationRight = animationRight;
         this.animationLeft = animationLeft;
-        this.animationUp = animationUp;
-        this.animationDown = animationDown;
+        this.animationFront = animationFront;
+        this.animationBack = animationBack;
+        this.animationDeath = animationDeath;
         this.stateTime = 0.33f;
         this.currentState = EnemyState.PATROLLING;
         this.game = game;
@@ -74,7 +78,7 @@ public class Enemy {
     public void update(Vector2 targetPosition) {
         float dt = Gdx.graphics.getDeltaTime();
         stateTime += dt;
-        
+
 
         switch (this.currentState) {
             case MOVING_UP:
@@ -112,6 +116,10 @@ public class Enemy {
             case FLEEING:
                 this.position.x += this.speed * dt * 5;
                 break;
+            case DIE:
+                this.position.x = 0;
+                this.position.y = 0;
+                this.speed = 0;
         }
     }
 
@@ -120,10 +128,10 @@ public class Enemy {
         TextureRegion currentFrame;
         switch (this.currentState) {
             case MOVING_UP:
-                currentFrame = animationUp.getKeyFrame(stateTime, true);
+                currentFrame = animationFront.getKeyFrame(stateTime, true);
                 break;
             case MOVING_DOWN:
-                currentFrame = animationDown.getKeyFrame(stateTime, true);
+                currentFrame = animationBack.getKeyFrame(stateTime, true);
                 break;
             case PATROLLING:
             case BOOSTING:
@@ -136,24 +144,16 @@ public class Enemy {
                     currentFrame = animationRight.getKeyFrame(stateTime, true);
                 }
                 break;
+            case DIE:
+                game.removeEnemy(game.enemy);
+                currentFrame = animationDeath.getKeyFrame(stateTime, true);
+                break;
             default:
                 currentFrame = animationRight.getKeyFrame(stateTime, true);
                 break;
         }
-        batch.draw(currentFrame, this.position.x, this.position.y);
-    }
-
-
-    public void onTouchPlayer() {
-        game.killPlayer();
-
-        Vector2 playerPosition = game.getPlayerPosition();
-        Vector2 direction = position.cpy().sub(playerPosition);
-        position.add(direction.scl(speed * Gdx.graphics.getDeltaTime()));
-    }
-
-    public void onTouchWall() {
-       this.currentState = EnemyState.PATROLLING;
+        batch.draw(currentFrame, this.position.x, this.position.y, currentFrame.getRegionWidth() * 2.5f,
+                (currentFrame.getRegionHeight() * 2.5f));
     }
 }
 
