@@ -45,6 +45,10 @@ public class MyGdxGame extends ApplicationAdapter {
 
 	//Player Character
 	Texture characterTexture;
+
+	Player player;
+
+
 	int characterX;
 	int characterY;
 	float movementCooldown;
@@ -167,6 +171,8 @@ public class MyGdxGame extends ApplicationAdapter {
 		restartButton = new Button(w / 2 - buttonSize * 2, h * 0.2f, buttonSize * 4, buttonSize, buttonLongTexture,
 				buttonLongDownTexture);
 
+		// Player
+		player = new Player(new Vector2(1, 18));
 		newGame();
 	}
 
@@ -227,6 +233,12 @@ public class MyGdxGame extends ApplicationAdapter {
 		enemy.render(spriteBatch);
 		spriteBatch.end();
 
+		//Draw player
+		batch.setProjectionMatrix(camera.combined);
+		batch.begin();
+		player.update(Gdx.graphics.getDeltaTime());
+		player.render(batch);
+		batch.end();
 
 		//Draw UI
 		uiBatch.begin();
@@ -249,87 +261,163 @@ public class MyGdxGame extends ApplicationAdapter {
 
 
 
+//	private void update() {
+//		//Touch Input Info
+//		boolean checkTouch = Gdx.input.isTouched();
+//		int touchX = Gdx.input.getX();
+//		int touchY = Gdx.input.getY();
+//
+//		//Update Game State based on input
+//		switch (gameState) {
+//
+//			case PLAYING:
+//				//Poll user for input
+//				moveLeftButton.update(checkTouch, touchX, touchY);
+//				moveRightButton.update(checkTouch, touchX, touchY);
+//				moveDownButton.update(checkTouch, touchX, touchY);
+//				moveUpButton.update(checkTouch, touchX, touchY);
+//
+//				int moveX = 0;
+//				int moveY = 0;
+//				if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || moveLeftButton.isDown) {
+//					moveLeftButton.isDown = true;
+//					moveX -= 1;
+//				} else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || moveRightButton.isDown) {
+//					moveRightButton.isDown = true;
+//					moveX += 1;
+//				} else if (Gdx.input.isKeyPressed(Input.Keys.DOWN) || moveDownButton.isDown) {
+//					moveDownButton.isDown = true;
+//					moveY -= 1;
+//				} else if (Gdx.input.isKeyPressed(Input.Keys.UP) || moveUpButton.isDown) {
+//					moveUpButton.isDown = true;
+//					moveY += 1;
+//				}
+//
+//				//Movement update
+//				if (movementCooldown <= 0.0f) { //Don't move every frame
+//
+//					//TODO Retrieve Collision layer
+//					MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
+//					TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
+//
+//					//Don't do anything if we're not moving
+//					if ((moveX != 0 || moveY != 0)
+//							//TODO Also check map bounds to prevent exceptions when accessing map cells
+//							&& moveX + characterX >= 0 && moveX + characterX < tileLayer.getWidth()
+//							&& moveY + characterY >= 0 && moveY + characterY < tileLayer.getHeight()
+//					) {
+//						//TODO Retrieve Target Tile
+//						TiledMapTileLayer.Cell targetCell = tileLayer.getCell(characterX + moveX, characterY + moveY);
+//						//TODO Move only if the target cell is empty
+//						if (targetCell == null) {
+//							camera.translate(moveX * 32, moveY * 32);
+//							characterX += moveX;
+//							characterY += moveY;
+//							movementCooldown = MOVEMENT_COOLDOWN_TIME;
+//						} //Restrict movement for a moment
+//					}
+//				}
+//
+//				//Enemy update
+//				Vector2 enemyPosition = enemy.getPosition();
+//				enemy.update(new Vector2(characterX, characterY));
+//
+//				// Check for collisions between the enemy and the player
+//				if (enemyPosition.epsilonEquals(new Vector2(characterX, characterY), 0.1f)) {
+//					enemy.onTouchPlayer();
+//				}
+//
+//				// Check for collisions between the enemy and walls
+//				//if (isWall(enemyPosition)) {
+//					// Enemy has collided with a wall
+//				//	enemy.onTouchWall();
+//				//}
+//
+//				//Check if player has met the winning condition
+//				if (characterX == 18 && characterY == 1) {
+//					//Player has won!
+//					gameState = GameState.COMPLETE;
+//				}
+//				break;
+//
+//			case COMPLETE:
+//				//Poll for input
+//				restartButton.update(checkTouch, touchX, touchY);
+//
+//				if (Gdx.input.isKeyPressed(Input.Keys.DPAD_CENTER) || restartButton.isDown) {
+//					restartButton.isDown = true;
+//					restartActive = true;
+//				} else if (restartActive) {
+//					newGame();
+//				}
+//				break;
+//		}
+//
+//		if (movementCooldown > 0.0f)
+//			movementCooldown -= elapsedTime;
+//	}
+
+
+
 	private void update() {
-		//Touch Input Info
 		boolean checkTouch = Gdx.input.isTouched();
 		int touchX = Gdx.input.getX();
 		int touchY = Gdx.input.getY();
 
-		//Update Game State based on input
 		switch (gameState) {
-
 			case PLAYING:
-				//Poll user for input
 				moveLeftButton.update(checkTouch, touchX, touchY);
 				moveRightButton.update(checkTouch, touchX, touchY);
 				moveDownButton.update(checkTouch, touchX, touchY);
 				moveUpButton.update(checkTouch, touchX, touchY);
 
-				int moveX = 0;
-				int moveY = 0;
+				float moveX = 0;
+				float moveY = 0;
 				if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || moveLeftButton.isDown) {
 					moveLeftButton.isDown = true;
-					moveX -= 1;
+					moveX = -1;
 				} else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || moveRightButton.isDown) {
 					moveRightButton.isDown = true;
-					moveX += 1;
+					moveX = 1;
 				} else if (Gdx.input.isKeyPressed(Input.Keys.DOWN) || moveDownButton.isDown) {
 					moveDownButton.isDown = true;
-					moveY -= 1;
+					moveY = -1;
 				} else if (Gdx.input.isKeyPressed(Input.Keys.UP) || moveUpButton.isDown) {
 					moveUpButton.isDown = true;
-					moveY += 1;
+					moveY = 1;
 				}
 
-				//Movement update
-				if (movementCooldown <= 0.0f) { //Don't move every frame
+				player.setVelocity(moveX, moveY);
 
-					//TODO Retrieve Collision layer
+				if (player.canMove()) {
 					MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
 					TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
 
-					//Don't do anything if we're not moving
 					if ((moveX != 0 || moveY != 0)
-							//TODO Also check map bounds to prevent exceptions when accessing map cells
-							&& moveX + characterX >= 0 && moveX + characterX < tileLayer.getWidth()
-							&& moveY + characterY >= 0 && moveY + characterY < tileLayer.getHeight()
-					) {
-						//TODO Retrieve Target Tile
-						TiledMapTileLayer.Cell targetCell = tileLayer.getCell(characterX + moveX, characterY + moveY);
-						//TODO Move only if the target cell is empty
+							&& moveX + player.getPosition().x >= 0 && moveX + player.getPosition().x < tileLayer.getWidth()
+							&& moveY + player.getPosition().y >= 0 && moveY + player.getPosition().y < tileLayer.getHeight()) {
+
+						TiledMapTileLayer.Cell targetCell = tileLayer.getCell((int) (player.getPosition().x + moveX), (int) (player.getPosition().y + moveY));
 						if (targetCell == null) {
 							camera.translate(moveX * 32, moveY * 32);
-							characterX += moveX;
-							characterY += moveY;
-							movementCooldown = MOVEMENT_COOLDOWN_TIME;
-						} //Restrict movement for a moment
+							player.move((int) moveX, (int) moveY);
+						}
 					}
 				}
-				
-				//Enemy update
-				Vector2 enemyPosition = enemy.getPosition();
-				enemy.update(new Vector2(characterX, characterY));
 
-				// Check for collisions between the enemy and the player
-				if (enemyPosition.epsilonEquals(new Vector2(characterX, characterY), 0.1f)) {
+				Vector2 enemyPosition = enemy.getPosition();
+				enemy.update(player.getPosition());
+
+				if (enemyPosition.epsilonEquals(player.getPosition(), 0.1f)) {
 					enemy.onTouchPlayer();
 				}
 
-				// Check for collisions between the enemy and walls
-				//if (isWall(enemyPosition)) {
-					// Enemy has collided with a wall
-				//	enemy.onTouchWall();
-				//}
-
-				//Check if player has met the winning condition
-				if (characterX == 18 && characterY == 1) {
-					//Player has won!
+				if (player.getPosition().x == 18 && player.getPosition().y == 1) {
 					gameState = GameState.COMPLETE;
 				}
 				break;
 
 			case COMPLETE:
-				//Poll for input
 				restartButton.update(checkTouch, touchX, touchY);
 
 				if (Gdx.input.isKeyPressed(Input.Keys.DPAD_CENTER) || restartButton.isDown) {
@@ -341,8 +429,8 @@ public class MyGdxGame extends ApplicationAdapter {
 				break;
 		}
 
-		if (movementCooldown > 0.0f)
-			movementCooldown -= elapsedTime;
+		if (player.getCooldown() > 0.0f)
+			player.reduceCooldown(elapsedTime);
 	}
 
 
