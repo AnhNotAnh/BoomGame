@@ -101,6 +101,8 @@ public class MyGdxGame extends ApplicationAdapter {
 	private static final float BOMB_COOLDOWN_TIME = 1.0f; // Cooldown time in seconds
 	private static final float BOMB_EXPLOSION_TIME = 2.0f; // Explosion time in seconds
 
+	private Texture explosionTexture;
+
 	Button placeBombButton;
 
 
@@ -204,6 +206,10 @@ public class MyGdxGame extends ApplicationAdapter {
 		bombs = new ArrayList<Bomb>();
 		bombCooldown = 0;
 
+		// Bomn explosion
+		explosionTexture = new Texture("fxs/explosion.png");
+		bombs = new ArrayList<Bomb>();
+
 		newGame();
 	}
 
@@ -274,6 +280,14 @@ public class MyGdxGame extends ApplicationAdapter {
 		batch.end();
 
 		// Render bombs
+		batch.setProjectionMatrix(camera.combined);
+		batch.begin();
+		for (Bomb bomb : bombs) {
+			bomb.render(batch);
+		}
+		batch.end();
+
+		// Render bombs and explosions
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
 		for (Bomb bomb : bombs) {
@@ -475,15 +489,14 @@ public class MyGdxGame extends ApplicationAdapter {
 					gameState = GameState.COMPLETE;
 				}
 
-				// Add bomb placement logic
-				placeBombButton.update(checkTouch, touchX, touchY);
-
+				// Handle bomb placement
 				if (placeBombButton.isDown && bombCooldown <= 0) {
 					Vector2 bombPosition = new Vector2(player.getPosition().x, player.getPosition().y);
-					bombs.add(new Bomb(bombPosition, bombTexture, BOMB_EXPLOSION_TIME));
+					bombs.add(new Bomb(bombPosition, bombTexture, explosionTexture, BOMB_EXPLOSION_TIME, 0.5f));
 					bombCooldown = BOMB_COOLDOWN_TIME;
 					placeBombButton.isDown = false; // Reset button state
 				}
+
 				if (bombCooldown > 0) {
 					bombCooldown -= elapsedTime;
 				}
@@ -492,11 +505,9 @@ public class MyGdxGame extends ApplicationAdapter {
 				Iterator<Bomb> bombIterator = bombs.iterator();
 				while (bombIterator.hasNext()) {
 					Bomb bomb = bombIterator.next();
-					bomb.update(elapsedTime);
-					if (bomb.hasExploded()) {
-						// Handle bomb explosion effects
+					bomb.update(elapsedTime, (TiledMapTileLayer) tiledMap.getLayers().get("Maze"));
+					if (bomb.isFinished()) {
 						bombIterator.remove();
-						// Add explosion logic here
 					}
 				}
 
@@ -529,6 +540,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		buttonLongDownTexture.dispose();
 		tiledMap.dispose();
 		bombTexture.dispose();
+		explosionTexture.dispose();
 
 	}
 
@@ -563,7 +575,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
 		// TODO: spawn inside the tiledMap, check if isWall() enemy cant spawn
 
-		enemy = Add functionality to place bombs.new Enemy(player.getPosition(), 45f, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
+		enemy = new Enemy(player.getPosition(), 45f, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
 	}
 }
 
