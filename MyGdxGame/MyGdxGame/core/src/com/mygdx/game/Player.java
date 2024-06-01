@@ -1,3 +1,5 @@
+// src/com/mygdx/game/Player.java
+
 package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Texture;
@@ -43,10 +45,14 @@ public class Player {
     private State currentState;
     private State previousState;
 
+    private float bombCooldown;
+    private static final float BOMB_COOLDOWN_TIME = 1.0f; // Cooldown time in seconds
+
     public Player(Vector2 startPosition) {
         this.position = startPosition;
         this.velocity = new Vector2(0, 0);
         this.movementCooldown = 0;
+        this.bombCooldown = 0;
 
 
 
@@ -122,6 +128,14 @@ public class Player {
         return movementCooldown;
     }
 
+    public boolean canPlaceBomb() {
+        return bombCooldown <= 0;
+    }
+
+    public void placeBomb() {
+        this.bombCooldown = BOMB_COOLDOWN_TIME;
+    }
+
     public void render(SpriteBatch batch) {
         TextureRegion currentFrame = getFrame();
         batch.draw(currentFrame, position.x * 32, position.y * 32, 32, 32);
@@ -158,6 +172,9 @@ public class Player {
 
     public void update(float deltaTime) {
         stateTime += deltaTime;
+        if (bombCooldown > 0) {
+            bombCooldown -= deltaTime;
+        }
 
         // Update state based on movement
         if (velocity.x == 0 && velocity.y == 0) {
