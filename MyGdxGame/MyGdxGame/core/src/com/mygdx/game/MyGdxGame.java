@@ -17,6 +17,8 @@ import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.utils.Array;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class MyGdxGame extends ApplicationAdapter {
 
@@ -91,6 +93,15 @@ public class MyGdxGame extends ApplicationAdapter {
 	Button restartButton;
 	//Just use this to only restart when the restart button is released instead of immediately as it's pressed
 	boolean restartActive;
+
+	//Bomb
+	private Texture bombTexture;
+	private ArrayList<Bomb> bombs;
+	private float bombCooldown;
+	private static final float BOMB_COOLDOWN_TIME = 1.0f; // Cooldown time in seconds
+	private static final float BOMB_EXPLOSION_TIME = 2.0f; // Explosion time in seconds
+
+	Button placeBombButton;
 
 
 	@Override
@@ -185,6 +196,14 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		// Player
 		player = new Player(new Vector2(1, 18));
+
+		//Place bomb button
+		placeBombButton = new Button(w / 2 - buttonSize, h * 0.8f, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
+		//Load bomb texture
+		bombTexture = new Texture("bomb.png");
+		bombs = new ArrayList<Bomb>();
+		bombCooldown = 0;
+
 		newGame();
 	}
 
@@ -235,10 +254,10 @@ public class MyGdxGame extends ApplicationAdapter {
 		//Draw Character
 		//Apply the camera's transform to the SpriteBatch so the character is drawn in the correct
 		//position on screen.
-		batch.setProjectionMatrix(camera.combined);
-		batch.begin();
-		batch.draw(characterTexture, characterX * 32, characterY * 32, 32, 32);
-		batch.end();
+//		batch.setProjectionMatrix(camera.combined);
+//		batch.begin();
+//		batch.draw(characterTexture, characterX * 32, characterY * 32, 32, 32);
+//		batch.end();
 
 		//Draw Enemy
 		spriteBatch.begin();
@@ -254,6 +273,14 @@ public class MyGdxGame extends ApplicationAdapter {
 		player.render(batch);
 		batch.end();
 
+		// Render bombs
+		batch.setProjectionMatrix(camera.combined);
+		batch.begin();
+		for (Bomb bomb : bombs) {
+			bomb.render(batch);
+		}
+		batch.end();
+
 		//Draw UI
 		uiBatch.begin();
 		switch(gameState) {
@@ -263,6 +290,7 @@ public class MyGdxGame extends ApplicationAdapter {
 				moveRightButton.draw(uiBatch);
 				moveDownButton.draw(uiBatch);
 				moveUpButton.draw(uiBatch);
+				placeBombButton.draw(uiBatch);
 				break;
 			//if gameState is Complete: Draw Restart button
 			case COMPLETE:
@@ -374,17 +402,21 @@ public class MyGdxGame extends ApplicationAdapter {
 
 
 	private void update() {
+		//Touch Input Info
 		boolean checkTouch = Gdx.input.isTouched();
 		int touchX = Gdx.input.getX();
 		int touchY = Gdx.input.getY();
 
+		//Update Game State based on input
 		switch (gameState) {
 			case PLAYING:
+				//Poll user for input
 				spawnNewEnemy();
 				moveLeftButton.update(checkTouch, touchX, touchY);
 				moveRightButton.update(checkTouch, touchX, touchY);
 				moveDownButton.update(checkTouch, touchX, touchY);
 				moveUpButton.update(checkTouch, touchX, touchY);
+				placeBombButton.update(checkTouch, touchX, touchY);
 
 				float moveX = 0;
 				float moveY = 0;
@@ -404,18 +436,24 @@ public class MyGdxGame extends ApplicationAdapter {
 
 				player.setVelocity(moveX, moveY);
 
+				//Movement update
 				if (player.canMove()) {
+
+					//TODO Retrieve Collision layer
 					MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
 					TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
 
+					//TODO Also check map bounds to prevent exceptions when accessing map cells
 					if ((moveX != 0 || moveY != 0)
 							&& moveX + player.getPosition().x >= 0
 							&& moveX + player.getPosition().x < tileLayer.getWidth()
 							&& moveY + player.getPosition().y >= 0
 							&& moveY + player.getPosition().y < tileLayer.getHeight()) {
 
+						//TODO Retrieve Target Tile
 						TiledMapTileLayer.Cell targetCell = tileLayer.getCell((int) (player.getPosition().x + moveX),
 								(int) (player.getPosition().y + moveY));
+						//TODO Move only if the target cell is empty
 						if (targetCell == null) {
 							camera.translate(moveX * 32, moveY * 32);
 							player.move((int) moveX, (int) moveY);
@@ -436,7 +474,35 @@ public class MyGdxGame extends ApplicationAdapter {
 				if (player.getPosition().x == 18 && player.getPosition().y == 1) {
 					gameState = GameState.COMPLETE;
 				}
+
+				// Add bomb placement logic
+				placeBombButton.update(checkTouch, touchX, touchY);
+
+				if (placeBombButton.isDown && bombCooldown <= 0) {
+					Vector2 bombPosition = new Vector2(player.getPosition().x, player.getPosition().y);
+					bombs.add(new Bomb(bombPosition, bombTexture, BOMB_EXPLOSION_TIME));
+					bombCooldown = BOMB_COOLDOWN_TIME;
+					placeBombButton.isDown = false; // Reset button state
+				}
+				if (bombCooldown > 0) {
+					bombCooldown -= elapsedTime;
+				}
+
+				// Update bombs
+				Iterator<Bomb> bombIterator = bombs.iterator();
+				while (bombIterator.hasNext()) {
+					Bomb bomb = bombIterator.next();
+					bomb.update(elapsedTime);
+					if (bomb.hasExploded()) {
+						// Handle bomb explosion effects
+						bombIterator.remove();
+						// Add explosion logic here
+					}
+				}
+
 				break;
+
+
 
 			case COMPLETE:
 				restartButton.update(checkTouch, touchX, touchY);
@@ -462,6 +528,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		buttonLongTexture.dispose();
 		buttonLongDownTexture.dispose();
 		tiledMap.dispose();
+		bombTexture.dispose();
 
 	}
 
@@ -496,7 +563,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
 		// TODO: spawn inside the tiledMap, check if isWall() enemy cant spawn
 
-		enemy = new Enemy(player.getPosition(), 45f, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
+		enemy = Add functionality to place bombs.new Enemy(player.getPosition(), 45f, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
 	}
 }
 
