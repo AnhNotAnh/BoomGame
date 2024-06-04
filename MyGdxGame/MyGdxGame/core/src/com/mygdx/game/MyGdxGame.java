@@ -71,6 +71,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	Texture enemyFlyFront;
 	SpriteBatch spriteBatch;
 	float stateTime;
+	int enemyX, enemyY;
 
 	private static final int FRAME_COLS = 3;
 	private static final int FRAME_COLSDEATH = 5;
@@ -179,7 +180,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		stateTime = 0.33f;
 
 		//Vector2 enemyPosition = new Vector2(50, 50);
-		//enemy = new Enemy(enemyPosition, 50f, flyAnimationRight, flyAnimationLeft, flyAnimationFront, flyAnimationBack, this);
+
 		enemies = new Array<Enemy>();
 
 
@@ -202,7 +203,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		//Place bomb button
 		placeBombButton = new Button(w / 2 - buttonSize, h * 0.8f, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
 		//Load bomb texture
-		bombTexture = new Texture("bomb.png");
+		bombTexture = new Texture("items/dynamite.png");
 		bombs = new ArrayList<Bomb>();
 		bombCooldown = 0;
 
@@ -229,6 +230,8 @@ public class MyGdxGame extends ApplicationAdapter {
 		movementCooldown = 0.0f;
 
 		//Enemy start location
+		enemyX = 5;
+		enemyY = 15;
 
 		camera.translate(characterX * 32, characterY * 32);
 		restartActive = false;
