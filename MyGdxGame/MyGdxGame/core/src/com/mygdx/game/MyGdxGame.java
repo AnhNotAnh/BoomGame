@@ -204,7 +204,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		//Place bomb button
 		placeBombButton = new Button(w / 2 - buttonSize, h * 0.8f, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
 		//Load bomb texture
-		bombTexture = new Texture("items/dynamite.png");
+		bombTexture = new Texture("items/bomb.png");
 		bombs = new ArrayList<Bomb>();
 		bombCooldown = 0;
 
