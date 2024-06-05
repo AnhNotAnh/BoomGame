@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -228,10 +229,6 @@ public class MyGdxGame extends ApplicationAdapter {
 		characterX = 1;
 		characterY = 18;
 		movementCooldown = 0.0f;
-
-		//Enemy start location
-		enemyX = 5;
-		enemyY = 15;
 
 		camera.translate(characterX * 32, characterY * 32);
 		restartActive = false;
@@ -547,15 +544,6 @@ public class MyGdxGame extends ApplicationAdapter {
 
 	}
 
-	public boolean isWall(Vector2 position) {
-		MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
-		if (collisionLayer instanceof TiledMapTileLayer) {
-			TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
-			return tileLayer.getCell((int) position.x, (int) position.y) != null;
-		}
-		return false;
-	}
-
 	public Vector2 getPlayerPosition() {
 		return  new Vector2(characterX * 32, characterY * 32);
 	}
@@ -574,11 +562,33 @@ public class MyGdxGame extends ApplicationAdapter {
 		if (enemies.size >= 1 && enemies.size <= 3) {
 			return;
 		}
+	
 		MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
 		TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
-		// TODO: spawn inside the tiledMap, check if isWall() enemy cant spawn
-
-		enemy = new Enemy(player.getPosition(), 45f, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
+	
+		// Try to find a valid spawn position
+		boolean validSpawnPosition = false;
+		Vector2 spawnPosition = new Vector2();
+		while (!validSpawnPosition) {
+			// Generate a random position within the map bounds in tile coordinates
+			int tileX = MathUtils.random(tileLayer.getWidth() - 1);
+			int tileY = MathUtils.random(tileLayer.getHeight() - 1);
+			spawnPosition.set(tileX, tileY);
+	
+			// Check if the spawn position is not a wall and not the player's starting position
+			TiledMapTileLayer.Cell cell = tileLayer.getCell(tileX, tileY);
+			boolean isWall = (cell != null && cell.getTile() != null);
+			boolean isPlayerStartPosition = (tileX == 1 && tileY == 18);
+	
+			if (!isWall && !isPlayerStartPosition) {
+				validSpawnPosition = true;
+			}
+		}
+	
+		// Spawn the enemy at the valid position
+		Enemy enemy = new Enemy(spawnPosition, 45f, enemyRightAnimation, enemyLeftAnimation,
+		enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
+		enemies.add(enemy);
 	}
 }
 
