@@ -15,8 +15,9 @@ public class Bomb {
     private float explosionTime;
     private float explosionDuration;
     private boolean exploded;
+    private TiledMapTileLayer collisionLayer;
 
-    public Bomb(Vector2 position, Texture bombTexture, Texture explosionTexture, float explosionTime, float explosionDuration) {
+    public Bomb(Vector2 position, Texture bombTexture, Texture explosionTexture, float explosionTime, float explosionDuration, TiledMapTileLayer collisionLayer) {
         this.position = position;
         this.bombTexture = bombTexture;
         this.explosionTexture = explosionTexture;
@@ -24,6 +25,7 @@ public class Bomb {
         this.explosionTime = explosionTime;
         this.explosionDuration = explosionDuration;
         this.exploded = false;
+        this.collisionLayer = collisionLayer;
     }
 
     public Vector2 getPosition() {
@@ -60,9 +62,21 @@ public class Bomb {
                 TiledMapTileLayer.Cell cell = tileLayer.getCell(x, y);
                 if (cell != null && cell.getTile() != null) {
                     int tileId = cell.getTile().getId();
-                    if (tileId == 2) {
+                    if (tileId == 2) // destroy ground object
+                    {
                         tileLayer.setCell(x, y, null);
-                    } else if (tileId == 1) {
+                        if (collisionLayer != null) {
+                            collisionLayer.setCell(x, y, null); // Check if collisionLayer is not null before setting cell
+                        }
+                    }
+                    else if (tileId == 3) // destroy rock object
+                    {
+                        tileLayer.setCell(x, y, null);
+                        if (collisionLayer != null) {
+                            collisionLayer.setCell(x, y, null); // Check if collisionLayer is not null before setting cell
+                        }
+                    }
+                    else if (tileId == 1) {
                         break;
                     }
                 }
