@@ -114,7 +114,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		batch = new SpriteBatch();
 		uiBatch = new SpriteBatch();
 
-		tiledMap = new TmxMapLoader().load("map/secondMap.tmx");
+		tiledMap = new TmxMapLoader().load("map/map.tmx");
 		tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
 
 		// Camera
