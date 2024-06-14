@@ -3,25 +3,25 @@
  <tileset firstgid="1" name="Terrain" tilewidth="32" tileheight="32" tilecount="7" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
-   <image width="96" height="32" source="terrain/grass.png"/>
+   <image width="32" height="32" source="terrain/grass3.png"/>
   </tile>
   <tile id="1">
-   <image width="96" height="32" source="terrain/ground.png"/>
+   <image width="32" height="32" source="terrain/ground2.png"/>
   </tile>
   <tile id="2">
-   <image width="96" height="32" source="terrain/rock.png"/>
+   <image width="32" height="32" source="terrain/rock2.png"/>
   </tile>
   <tile id="3">
    <image width="32" height="32" source="terrain/sand.png"/>
   </tile>
   <tile id="4">
-   <image width="96" height="32" source="terrain/wall.png"/>
+   <image width="32" height="32" source="terrain/wall3.png"/>
   </tile>
   <tile id="5">
-   <image width="64" height="32" source="terrain/water.png"/>
+   <image width="32" height="32" source="terrain/water1.png"/>
   </tile>
   <tile id="6">
-   <image width="128" height="32" source="terrain/wood.png"/>
+   <image width="32" height="32" source="terrain/wood1.png"/>
   </tile>
  </tileset>
  <layer id="1" name="Ground" width="20" height="20">
