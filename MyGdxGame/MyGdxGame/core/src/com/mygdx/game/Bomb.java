@@ -76,6 +76,13 @@ public class Bomb {
                             collisionLayer.setCell(x, y, null); // Check if collisionLayer is not null before setting cell
                         }
                     }
+                    else if (tileId == 7) // destroy wood object
+                    {
+                        tileLayer.setCell(x, y, null);
+                        if (collisionLayer != null) {
+                            collisionLayer.setCell(x, y, null); // Check if collisionLayer is not null before setting cell
+                        }
+                    }
                     else if (tileId == 1) {
                         break;
                     }
