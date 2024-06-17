@@ -22,12 +22,9 @@ public class Enemy {
 
     public enum EnemyState {
         MOVING_UP,
+        MOVING_RIGHT,
+        MOVING_LEFT,
         MOVING_DOWN,
-        PATROLLING,
-        BOOSTING,
-        CHASING,
-        DODGING,
-        FLEEING,
         DIE
     }
 
@@ -41,31 +38,12 @@ public class Enemy {
         this.animationBack = animationBack;
         this.animationDeath = animationDeath;
         this.stateTime = 0.33f;
-        this.currentState = EnemyState.PATROLLING;
+        this.currentState = EnemyState.MOVING_RIGHT; // Initial state
         this.game = game;
     }
 
     public Vector2 getPosition() {
         return position;
-    }
-
-    public float getAngle(Vector2 target) {
-        float angle = (float) Math.toDegrees(Math.atan2(target.y - this.position.y, target.x - this.position.x));
-        if (angle < 0) {
-            angle += 360;
-        }
-        return angle;
-    }
-
-    public boolean canSeePlayer() {
-        Vector2 playerPosition = game.getPlayerPosition();
-        float angle = this.getAngle(playerPosition);
-        if (playerPosition.x < this.position.x) {
-            if (angle > 170 && angle < 190) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public void update(TiledMapTileLayer collisionLayer) {
@@ -81,34 +59,11 @@ public class Enemy {
             case MOVING_DOWN:
                 nextPosition.y -= speed * dt;
                 break;
-            case PATROLLING:
+            case MOVING_RIGHT:
+                nextPosition.x += speed * dt;
+                break;
+            case MOVING_LEFT:
                 nextPosition.x -= speed * dt;
-                break;
-            case BOOSTING:
-                nextPosition.x -= speed * dt * 5;
-                if (!canSeePlayer()) {
-                    currentState = EnemyState.PATROLLING;
-                }
-                break;
-            case CHASING:
-                if (nextPosition.y < game.getPlayerPosition().y)
-                    nextPosition.y += speed * dt;
-                if (nextPosition.y > game.getPlayerPosition().y)
-                    nextPosition.y -= speed * dt;
-                nextPosition.x -= speed * dt * 3;
-                if (!canSeePlayer()) {
-                    currentState = EnemyState.PATROLLING;
-                }
-                break;
-            case DODGING:
-                if (nextPosition.y < game.getPlayerPosition().y)
-                    nextPosition.y -= speed * dt * 3;
-                if (nextPosition.y > game.getPlayerPosition().y)
-                    nextPosition.y += speed * dt * 3;
-                nextPosition.x -= speed * dt;
-                break;
-            case FLEEING:
-                nextPosition.x += speed * dt * 5;
                 break;
             case DIE:
                 game.removeEnemy(this);
@@ -117,12 +72,31 @@ public class Enemy {
                 speed = 0;
         }
 
-        TiledMapTileLayer.Cell nextCell = collisionLayer.getCell((int) nextPosition.x, (int) nextPosition.y);
-        if (nextCell == null || nextCell.getTile() == null) {
-            position = nextPosition;
+        if (!isCollision(nextPosition)) {
+            position.set(nextPosition);
         } else {
-            currentState = EnemyState.PATROLLING;
-            findNewPath(collisionLayer);
+            // Handle collision
+            changeDirection();
+        }
+    }
+
+    private void changeDirection() {
+        switch (currentState) {
+            case MOVING_UP:
+                currentState = EnemyState.MOVING_RIGHT;
+                break;
+            case MOVING_RIGHT:
+                currentState = EnemyState.MOVING_DOWN;
+                break;
+            case MOVING_DOWN:
+                currentState = EnemyState.MOVING_LEFT;
+                break;
+            case MOVING_LEFT:
+                currentState = EnemyState.MOVING_UP;
+                break;
+            case DIE:
+                // Do nothing
+                break;
         }
     }
 
@@ -135,16 +109,11 @@ public class Enemy {
             case MOVING_DOWN:
                 currentFrame = animationBack.getKeyFrame(stateTime, true);
                 break;
-            case PATROLLING:
-            case BOOSTING:
-            case CHASING:
-            case DODGING:
-            case FLEEING:
-                if (position.x > game.getPlayerPosition().x) {
-                    currentFrame = animationLeft.getKeyFrame(stateTime, true);
-                } else {
-                    currentFrame = animationRight.getKeyFrame(stateTime, true);
-                }
+            case MOVING_RIGHT:
+                currentFrame = animationRight.getKeyFrame(stateTime, true);
+                break;
+            case MOVING_LEFT:
+                currentFrame = animationLeft.getKeyFrame(stateTime, true);
                 break;
             case DIE:
                 currentFrame = animationDeath.getKeyFrame(stateTime, true);
@@ -161,66 +130,11 @@ public class Enemy {
                 currentFrame.getRegionHeight() * 2.5f);
     }
 
-    private void findNewPath(TiledMapTileLayer collisionLayer) {
-        Vector2 playerPosition = game.getPlayerPosition();
-        float angle = getAngle(playerPosition);
-        if (playerPosition.x < position.x) {
-            if (angle > 170 && angle < 190) {
-                currentState = EnemyState.CHASING;
-            } else {
-                currentState = EnemyState.DODGING;
-            }
-        } else {
-            currentState = EnemyState.FLEEING;
-        }
-        if (currentState == EnemyState.CHASING || currentState == EnemyState.DODGING) {
-            if (position.y > playerPosition.y) {
-                currentState = EnemyState.MOVING_UP;
-            } else {
-                currentState = EnemyState.MOVING_DOWN;
-            }
-        }
-        if (currentState == EnemyState.BOOSTING) {
-            if (position.y > playerPosition.y) {
-                currentState = EnemyState.MOVING_UP;
-            } else {
-                currentState = EnemyState.MOVING_DOWN;
-            }
-        }
-        if (currentState == EnemyState.FLEEING) {
-            if (position.y > playerPosition.y) {
-                currentState = EnemyState.MOVING_UP;
-            } else {
-                currentState = EnemyState.MOVING_DOWN;
-            }
-        }
-        if (currentState == EnemyState.PATROLLING) {
-            if (position.y > playerPosition.y) {
-                currentState = EnemyState.MOVING_UP;
-            } else {
-                currentState = EnemyState.MOVING_DOWN;
-            }
-        }
-        if (currentState == EnemyState.MOVING_UP) {
-            if (position.y > playerPosition.y) {
-                currentState = EnemyState.MOVING_UP;
-            } else {
-                currentState = EnemyState.MOVING_DOWN;
-            }
-        }
-        if (currentState == EnemyState.MOVING_DOWN) {
-            if (position.y > playerPosition.y) {
-                currentState = EnemyState.MOVING_UP;
-            } else {
-                currentState = EnemyState.MOVING_DOWN;
-            }
-        }
-        if (currentState == EnemyState.DIE) {
-            if (position.y > playerPosition.y) {
-                currentState = EnemyState.MOVING_UP;
-            } else {
-                currentState = EnemyState.MOVING_DOWN;
-            }
-        }
+    private boolean isCollision(Vector2 nextPosition) {
+        TiledMapTileLayer collisionLayer = (TiledMapTileLayer) game.tiledMap.getLayers().get("Collision");
+        int tileX = (int) (nextPosition.x / collisionLayer.getTileWidth());
+        int tileY = (int) (nextPosition.y / collisionLayer.getTileHeight());
+        TiledMapTileLayer.Cell cell = collisionLayer.getCell(tileX, tileY);
+        return cell != null && cell.getTile() != null;
     }
 }
