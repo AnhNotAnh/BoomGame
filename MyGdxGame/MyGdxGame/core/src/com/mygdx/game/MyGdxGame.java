@@ -1,59 +1,50 @@
 package com.mygdx.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
 public class MyGdxGame extends ApplicationAdapter {
 
-
-	public enum GameState { PLAYING, COMPLETE };
+	public enum GameState { PLAYING, COMPLETE }
 
 	public static final float MOVEMENT_COOLDOWN_TIME = 0.3f;
 
 	GameState gameState = GameState.PLAYING;
 
-	//Map and rendering
+	// Map and rendering
 	SpriteBatch batch;
-	SpriteBatch uiBatch; //Second SpriteBatch without camera transforms, for drawing UI
+	SpriteBatch uiBatch;
 	TiledMap tiledMap;
 	TiledMapRenderer tiledMapRenderer;
 	OrthographicCamera camera;
 
-
-	//Game clock
+	// Game clock
 	long lastTime;
 	float elapsedTime;
 
-	//Player Character
-	Texture characterTexture;
-
+	// Player Character
 	Player player;
-
-
-	int characterX;
-	int characterY;
 	float movementCooldown;
 
-
-	//Enemy
+	// Enemy
 	Animation enemyRightAnimation;
 	Animation enemyLeftAnimation;
 	Animation enemyFrontAnimation;
@@ -72,41 +63,37 @@ public class MyGdxGame extends ApplicationAdapter {
 	Texture enemyFlyFront;
 	SpriteBatch spriteBatch;
 	float stateTime;
-	int enemyX, enemyY;
 
 	private static final int FRAME_COLS = 3;
 	private static final int FRAME_COLSDEATH = 5;
 	private static final int FRAME_ROWS = 1;
 
 	Array<Enemy> enemies;
-	Enemy enemy;
 
-	//UI textures
+	// UI textures
 	Texture buttonSquareTexture;
 	Texture buttonSquareDownTexture;
 	Texture buttonLongTexture;
 	Texture buttonLongDownTexture;
 
-	//UI Buttons
+	// UI Buttons
 	Button moveLeftButton;
 	Button moveRightButton;
 	Button moveDownButton;
 	Button moveUpButton;
 	Button restartButton;
-	//Just use this to only restart when the restart button is released instead of immediately as it's pressed
 	boolean restartActive;
 
-	//Bomb
+	// Bomb
 	private Texture bombTexture;
 	private ArrayList<Bomb> bombs;
 	private float bombCooldown;
-	private static final float BOMB_COOLDOWN_TIME = 1.0f; // Cooldown time in seconds
-	private static final float BOMB_EXPLOSION_TIME = 2.0f; // Explosion time in seconds
+	private static final float BOMB_COOLDOWN_TIME = 1.0f;
+	private static final float BOMB_EXPLOSION_TIME = 2.0f;
 
 	private Texture explosionTexture;
 
 	Button placeBombButton;
-
 
 	@Override
 	public void create() {
@@ -124,7 +111,6 @@ public class MyGdxGame extends ApplicationAdapter {
 		camera.setToOrtho(false, w / 2, h / 2);
 
 		// Textures
-		characterTexture = new Texture("map/character.png");
 		buttonSquareTexture = new Texture("button/buttonSquare_blue.png");
 		buttonSquareDownTexture = new Texture("button/buttonSquare_beige_pressed.png");
 		buttonLongTexture = new Texture("button/buttonLong_blue.png");
@@ -137,16 +123,11 @@ public class MyGdxGame extends ApplicationAdapter {
 		enemyFlyBack = new Texture(Gdx.files.internal("enemies/fly-back.png"));
 		enemyDeath = new Texture(Gdx.files.internal("enemies/death-front.png"));
 
-		TextureRegion[][] tempRight = TextureRegion.split(enemyFlyRight, enemyFlyRight.getWidth()
-				/ FRAME_COLS, enemyFlyRight.getHeight() / FRAME_ROWS);
-		TextureRegion[][] tempLeft = TextureRegion.split(enemyFlyLeft, enemyFlyLeft.getWidth()
-				/ FRAME_COLS, enemyFlyLeft.getHeight() / FRAME_ROWS);
-		TextureRegion[][] tempFront = TextureRegion.split(enemyFlyFront, enemyFlyFront.getWidth()
-				/ FRAME_COLS, enemyFlyFront.getHeight() / FRAME_ROWS);
-		TextureRegion[][] tempBack = TextureRegion.split(enemyFlyBack, enemyFlyBack.getWidth()
-				/ FRAME_COLS, enemyFlyBack.getHeight() / FRAME_ROWS);
-		TextureRegion[][] tempDeath = TextureRegion.split(enemyDeath, enemyDeath.getWidth()
-				/ FRAME_COLSDEATH, enemyDeath.getHeight() / FRAME_ROWS);
+		TextureRegion[][] tempRight = TextureRegion.split(enemyFlyRight, enemyFlyRight.getWidth() / FRAME_COLS, enemyFlyRight.getHeight() / FRAME_ROWS);
+		TextureRegion[][] tempLeft = TextureRegion.split(enemyFlyLeft, enemyFlyLeft.getWidth() / FRAME_COLS, enemyFlyLeft.getHeight() / FRAME_ROWS);
+		TextureRegion[][] tempFront = TextureRegion.split(enemyFlyFront, enemyFlyFront.getWidth() / FRAME_COLS, enemyFlyFront.getHeight() / FRAME_ROWS);
+		TextureRegion[][] tempBack = TextureRegion.split(enemyFlyBack, enemyFlyBack.getWidth() / FRAME_COLS, enemyFlyBack.getHeight() / FRAME_ROWS);
+		TextureRegion[][] tempDeath = TextureRegion.split(enemyDeath, enemyDeath.getWidth() / FRAME_COLSDEATH, enemyDeath.getHeight() / FRAME_ROWS);
 
 		enemyFrameRight = new TextureRegion[FRAME_COLS * FRAME_ROWS];
 		enemyFrameLeft = new TextureRegion[FRAME_COLS * FRAME_ROWS];
@@ -165,8 +146,8 @@ public class MyGdxGame extends ApplicationAdapter {
 			}
 		}
 
-		for(int i = 0; i < FRAME_ROWS; i++){
-			for(int j = 0; j < FRAME_COLSDEATH; j++){
+		for (int i = 0; i < FRAME_ROWS; i++) {
+			for (int j = 0; j < FRAME_COLSDEATH; j++) {
 				enemyFramesDeath[index] = tempDeath[i][j];
 				index++;
 			}
@@ -180,35 +161,49 @@ public class MyGdxGame extends ApplicationAdapter {
 		enemyDeathAnimation = new Animation(0.5f, enemyFramesDeath);
 		stateTime = 0.33f;
 
-		//Vector2 enemyPosition = new Vector2(50, 50);
-
 		enemies = new Array<Enemy>();
 
+		// Spawn enemies at fixed locations
+		MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
+		TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
+
+		// Spawn enemy 1
+		Vector2 spawnPosition1 = new Vector2(5, 10); // Replace with desired spawn position
+		float worldX1 = spawnPosition1.x * tileLayer.getTileWidth() + camera.position.x - camera.viewportWidth / 2;
+		float worldY1 = spawnPosition1.y * tileLayer.getTileHeight() + camera.position.y - camera.viewportHeight / 2;
+		Vector2 worldSpawnPosition1 = new Vector2(worldX1, worldY1);
+		Enemy enemy1 = new Enemy(worldSpawnPosition1, 45f, enemyRightAnimation, enemyLeftAnimation,
+				enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
+		enemies.add(enemy1);
+
+		// Spawn enemy 2
+		Vector2 spawnPosition2 = new Vector2(10, 5); // Replace with desired spawn position
+		float worldX2 = spawnPosition2.x * tileLayer.getTileWidth() + camera.position.x - camera.viewportWidth / 2;
+		float worldY2 = spawnPosition2.y * tileLayer.getTileHeight() + camera.position.y - camera.viewportHeight / 2;
+		Vector2 worldSpawnPosition2 = new Vector2(worldX2, worldY2);
+		Enemy enemy2 = new Enemy(worldSpawnPosition2, 45f, enemyRightAnimation, enemyLeftAnimation,
+		         enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
+		enemies.add(enemy2);
 
 		// Buttons
 		float buttonSize = h * 0.2f;
-		moveLeftButton = new Button(0.0f, buttonSize, buttonSize, buttonSize, buttonSquareTexture,
-				buttonSquareDownTexture);
-		moveRightButton = new Button(buttonSize * 2, buttonSize, buttonSize, buttonSize, buttonSquareTexture,
-				buttonSquareDownTexture);
-		moveDownButton = new Button(buttonSize, 0.0f, buttonSize, buttonSize, buttonSquareTexture,
-				buttonSquareDownTexture);
-		moveUpButton = new Button(buttonSize, buttonSize * 2, buttonSize, buttonSize, buttonSquareTexture,
-				buttonSquareDownTexture);
-		restartButton = new Button(w / 2 - buttonSize * 2, h * 0.2f, buttonSize * 4, buttonSize, buttonLongTexture,
-				buttonLongDownTexture);
+		moveLeftButton = new Button(0.0f, buttonSize, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
+		moveRightButton = new Button(buttonSize * 2, buttonSize, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
+		moveDownButton = new Button(buttonSize, 0.0f, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
+		moveUpButton = new Button(buttonSize, buttonSize * 2, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
+		restartButton = new Button(w / 2 - buttonSize * 2, h * 0.2f, buttonSize * 4, buttonSize, buttonLongTexture, buttonLongDownTexture);
 
 		// Player
 		player = new Player(new Vector2(1, 18));
 
-		//Place bomb button
+		// Place bomb button
 		placeBombButton = new Button(w / 2 - buttonSize, h * 0.8f, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
-		//Load bomb texture
+		// Load bomb texture
 		bombTexture = new Texture("items/bomb.png");
 		bombs = new ArrayList<Bomb>();
 		bombCooldown = 0;
 
-		// Bomn explosion
+		// Bomb explosion
 		explosionTexture = new Texture("fxs/explosion.png");
 		bombs = new ArrayList<Bomb>();
 
@@ -218,73 +213,55 @@ public class MyGdxGame extends ApplicationAdapter {
 	private void newGame() {
 		gameState = GameState.PLAYING;
 
-		//Translate camera to center of screen
-		camera.position.x = 16; //The 16 is half the size of a tile
+		// Translate camera to center of screen
+		camera.position.x = 16; // The 16 is half the size of a tile
 		camera.position.y = 16;
 
 		lastTime = System.currentTimeMillis();
 		elapsedTime = 0.0f;
 
-		//Player start location, you can have this stored in the tilemaze using an object layer.
-		characterX = 1;
-		characterY = 18;
+		// Player start location, you can have this stored in the tiled map using an object layer
+		player.setPosition(new Vector2(1, 18));
 		movementCooldown = 0.0f;
 
-		camera.translate(characterX * 32, characterY * 32);
+		camera.translate(player.getPosition().x * 32, player.getPosition().y * 32);
 		restartActive = false;
 	}
 
 	@Override
-	public void render () {
+	public void render() {
 		long currentTime = System.currentTimeMillis();
-		//Divide by a thousand to convert from milliseconds to seconds
+		// Divide by a thousand to convert from milliseconds to seconds
 		elapsedTime = (currentTime - lastTime) / 1000.0f;
 		lastTime = currentTime;
 		stateTime += elapsedTime;
 
-		//Update the Game State
+		// Update the Game State
 		update();
 
-
-		//Clear the screen before drawing.
+		// Clear the screen before drawing
 		Gdx.gl.glClearColor(0, 0, 0, 1);
-		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA); //Allows transparent sprites/tiles
+		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA); // Allows transparent sprites/tiles
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 		camera.update();
 
-		//TODO Render Map Here
+		// Render Map
 		tiledMapRenderer.setView(camera);
 		tiledMapRenderer.render();
 
-		//Draw Character
-		//Apply the camera's transform to the SpriteBatch so the character is drawn in the correct
-		//position on screen.
-//		batch.setProjectionMatrix(camera.combined);
-//		batch.begin();
-//		batch.draw(characterTexture, characterX * 32, characterY * 32, 32, 32);
-//		batch.end();
-
-		//Draw Enemy
+		// Draw Enemy
 		spriteBatch.begin();
-		for(Enemy enemy : enemies){
+		for (Enemy enemy : enemies) {
 			enemy.render(spriteBatch);
 		}
 		spriteBatch.end();
 
-		//Draw player
+		// Draw player
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
 		player.update(Gdx.graphics.getDeltaTime());
 		player.render(batch);
-		batch.end();
-
-		// Render bombs
-		batch.setProjectionMatrix(camera.combined);
-		batch.begin();
-		for (Bomb bomb : bombs) {
-			bomb.render(batch);
-		}
 		batch.end();
 
 		// Render bombs and explosions
@@ -295,10 +272,9 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 		batch.end();
 
-		//Draw UI
+		// Draw UI
 		uiBatch.begin();
-		switch(gameState) {
-			//if gameState is Running: Draw Controls
+		switch (gameState) {
 			case PLAYING:
 				moveLeftButton.draw(uiBatch);
 				moveRightButton.draw(uiBatch);
@@ -306,7 +282,6 @@ public class MyGdxGame extends ApplicationAdapter {
 				moveUpButton.draw(uiBatch);
 				placeBombButton.draw(uiBatch);
 				break;
-			//if gameState is Complete: Draw Restart button
 			case COMPLETE:
 				restartButton.draw(uiBatch);
 				break;
@@ -314,118 +289,16 @@ public class MyGdxGame extends ApplicationAdapter {
 		uiBatch.end();
 	}
 
-
-
-
-//	private void update() {
-//		//Touch Input Info
-//		boolean checkTouch = Gdx.input.isTouched();
-//		int touchX = Gdx.input.getX();
-//		int touchY = Gdx.input.getY();
-//
-//		//Update Game State based on input
-//		switch (gameState) {
-//
-//			case PLAYING:
-//				//Poll user for input
-//				moveLeftButton.update(checkTouch, touchX, touchY);
-//				moveRightButton.update(checkTouch, touchX, touchY);
-//				moveDownButton.update(checkTouch, touchX, touchY);
-//				moveUpButton.update(checkTouch, touchX, touchY);
-//
-//				int moveX = 0;
-//				int moveY = 0;
-//				if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || moveLeftButton.isDown) {
-//					moveLeftButton.isDown = true;
-//					moveX -= 1;
-//				} else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || moveRightButton.isDown) {
-//					moveRightButton.isDown = true;
-//					moveX += 1;
-//				} else if (Gdx.input.isKeyPressed(Input.Keys.DOWN) || moveDownButton.isDown) {
-//					moveDownButton.isDown = true;
-//					moveY -= 1;
-//				} else if (Gdx.input.isKeyPressed(Input.Keys.UP) || moveUpButton.isDown) {
-//					moveUpButton.isDown = true;
-//					moveY += 1;
-//				}
-//
-//				//Movement update
-//				if (movementCooldown <= 0.0f) { //Don't move every frame
-//
-//					//TODO Retrieve Collision layer
-//					MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
-//					TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
-//
-//					//Don't do anything if we're not moving
-//					if ((moveX != 0 || moveY != 0)
-//							//TODO Also check map bounds to prevent exceptions when accessing map cells
-//							&& moveX + characterX >= 0 && moveX + characterX < tileLayer.getWidth()
-//							&& moveY + characterY >= 0 && moveY + characterY < tileLayer.getHeight()
-//					) {
-//						//TODO Retrieve Target Tile
-//						TiledMapTileLayer.Cell targetCell = tileLayer.getCell(characterX + moveX, characterY + moveY);
-//						//TODO Move only if the target cell is empty
-//						if (targetCell == null) {
-//							camera.translate(moveX * 32, moveY * 32);
-//							characterX += moveX;
-//							characterY += moveY;
-//							movementCooldown = MOVEMENT_COOLDOWN_TIME;
-//						} //Restrict movement for a moment
-//					}
-//				}
-//
-//				//Enemy update
-//				Vector2 enemyPosition = enemy.getPosition();
-//				enemy.update(new Vector2(characterX, characterY));
-//
-//				// Check for collisions between the enemy and the player
-//				if (enemyPosition.epsilonEquals(new Vector2(characterX, characterY), 0.1f)) {
-//					enemy.onTouchPlayer();
-//				}
-//
-//				// Check for collisions between the enemy and walls
-//				//if (isWall(enemyPosition)) {
-//					// Enemy has collided with a wall
-//				//	enemy.onTouchWall();
-//				//}
-//
-//				//Check if player has met the winning condition
-//				if (characterX == 18 && characterY == 1) {
-//					//Player has won!
-//					gameState = GameState.COMPLETE;
-//				}
-//				break;
-//
-//			case COMPLETE:
-//				//Poll for input
-//				restartButton.update(checkTouch, touchX, touchY);
-//
-//				if (Gdx.input.isKeyPressed(Input.Keys.DPAD_CENTER) || restartButton.isDown) {
-//					restartButton.isDown = true;
-//					restartActive = true;
-//				} else if (restartActive) {
-//					newGame();
-//				}
-//				break;
-//		}
-//
-//		if (movementCooldown > 0.0f)
-//			movementCooldown -= elapsedTime;
-//	}
-
-
-
 	private void update() {
-		//Touch Input Info
+		// Touch Input Info
 		boolean checkTouch = Gdx.input.isTouched();
 		int touchX = Gdx.input.getX();
 		int touchY = Gdx.input.getY();
 
-		//Update Game State based on input
+		// Update Game State based on input
 		switch (gameState) {
 			case PLAYING:
-				//Poll user for input
-				spawnNewEnemy();
+				// Poll user for input
 				moveLeftButton.update(checkTouch, touchX, touchY);
 				moveRightButton.update(checkTouch, touchX, touchY);
 				moveDownButton.update(checkTouch, touchX, touchY);
@@ -450,24 +323,22 @@ public class MyGdxGame extends ApplicationAdapter {
 
 				player.setVelocity(moveX, moveY);
 
-				//Movement update
+				// Movement update
 				if (player.canMove()) {
-
-					//TODO Retrieve Collision layer
+					// Retrieve Collision layer
 					MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
 					TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
 
-					//TODO Also check map bounds to prevent exceptions when accessing map cells
 					if ((moveX != 0 || moveY != 0)
 							&& moveX + player.getPosition().x >= 0
 							&& moveX + player.getPosition().x < tileLayer.getWidth()
 							&& moveY + player.getPosition().y >= 0
 							&& moveY + player.getPosition().y < tileLayer.getHeight()) {
 
-						//TODO Retrieve Target Tile
+						// Retrieve Target Tile
 						TiledMapTileLayer.Cell targetCell = tileLayer.getCell((int) (player.getPosition().x + moveX),
 								(int) (player.getPosition().y + moveY));
-						//TODO Move only if the target cell is empty
+						// Move only if the target cell is empty
 						if (targetCell == null) {
 							camera.translate(moveX * 32, moveY * 32);
 							player.move((int) moveX, (int) moveY);
@@ -477,12 +348,12 @@ public class MyGdxGame extends ApplicationAdapter {
 
 				for (Enemy enemy : enemies) {
 					Vector2 enemyPosition = enemy.getPosition();
-					enemy.update(new Vector2(characterX, characterY));
+					TiledMapTileLayer collisionLayer = (TiledMapTileLayer) tiledMap.getLayers().get("Collision");
+					enemy.update(collisionLayer);
 
-					if (enemyPosition.epsilonEquals(new Vector2(player.getPosition().x, player.getPosition().y), 0.1f)) {
+					if (enemyPosition.epsilonEquals(player.getPosition(), 0.1f)) {
 						killPlayer();
 					}
-
 				}
 
 				if (player.getPosition().x == 18 && player.getPosition().y == 1) {
@@ -492,7 +363,7 @@ public class MyGdxGame extends ApplicationAdapter {
 				// Handle bomb placement
 				if (placeBombButton.isDown && bombCooldown <= 0) {
 					Vector2 bombPosition = new Vector2(player.getPosition().x, player.getPosition().y);
-					TiledMapTileLayer collisionLayer = (TiledMapTileLayer)tiledMap.getLayers().get("Collision");
+					TiledMapTileLayer collisionLayer = (TiledMapTileLayer) tiledMap.getLayers().get("Collision");
 					bombs.add(new Bomb(bombPosition, bombTexture, explosionTexture, BOMB_EXPLOSION_TIME, 0.5f, collisionLayer));
 					bombCooldown = BOMB_COOLDOWN_TIME;
 					placeBombButton.isDown = false; // Reset button state
@@ -514,8 +385,6 @@ public class MyGdxGame extends ApplicationAdapter {
 
 				break;
 
-
-
 			case COMPLETE:
 				restartButton.update(checkTouch, touchX, touchY);
 
@@ -533,8 +402,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	}
 
 	@Override
-	public void dispose () {
-		characterTexture.dispose();
+	public void dispose() {
 		buttonSquareTexture.dispose();
 		buttonSquareDownTexture.dispose();
 		buttonLongTexture.dispose();
@@ -542,55 +410,18 @@ public class MyGdxGame extends ApplicationAdapter {
 		tiledMap.dispose();
 		bombTexture.dispose();
 		explosionTexture.dispose();
-
 	}
 
 	public Vector2 getPlayerPosition() {
-		return  new Vector2(characterX * 32, characterY * 32);
+		return player.getPosition();
 	}
 
 	public void killPlayer() {
 		gameState = GameState.COMPLETE;
-		characterX = 0;
-		characterY = 0;
+		player.setPosition(new Vector2(1, 18)); // Reset player position
 	}
 
 	public void removeEnemy(Enemy enemy) {
 		enemies.removeValue(enemy, true);
 	}
-
-	public void spawnNewEnemy() {
-		if (enemies.size >= 1 && enemies.size <= 3) {
-			return;
-		}
-	
-		MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
-		TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
-	
-		// Try to find a valid spawn position
-		boolean validSpawnPosition = false;
-		Vector2 spawnPosition = new Vector2();
-		while (!validSpawnPosition) {
-			// Generate a random position within the map bounds in tile coordinates
-			int tileX = MathUtils.random(tileLayer.getWidth() - 1);
-			int tileY = MathUtils.random(tileLayer.getHeight() - 1);
-			spawnPosition.set(tileX, tileY);
-	
-			// Check if the spawn position is not a wall and not the player's starting position
-			TiledMapTileLayer.Cell cell = tileLayer.getCell(tileX, tileY);
-			boolean isWall = (cell != null && cell.getTile() != null);
-			boolean isPlayerStartPosition = (tileX == 1 && tileY == 18);
-	
-			if (!isWall && !isPlayerStartPosition) {
-				validSpawnPosition = true;
-			}
-		}
-	
-		// Spawn the enemy at the valid position
-		Enemy enemy = new Enemy(spawnPosition, 45f, enemyRightAnimation, enemyLeftAnimation,
-		enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
-		enemies.add(enemy);
-	}
 }
-
-

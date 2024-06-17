@@ -1,29 +1,24 @@
 package com.mygdx.game;
 
-import java.util.ArrayList;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.math.Vector3;
 
 public class Enemy {
-    MyGdxGame game;
-    Vector2 position;
-    float speed = 50f;
-    float stateTime;
-
-
-    Animation<TextureRegion> animationRight;
-    Animation<TextureRegion> animationLeft;
-    Animation<TextureRegion> animationFront;
-    Animation<TextureRegion> animationBack;
-    Animation<TextureRegion> animationDeath;
-
-    EnemyState currentState;
+    private MyGdxGame game;
+    private Vector2 position;
+    private float speed = 50f;
+    private float stateTime;
+    private Animation<TextureRegion> animationRight;
+    private Animation<TextureRegion> animationLeft;
+    private Animation<TextureRegion> animationFront;
+    private Animation<TextureRegion> animationBack;
+    private Animation<TextureRegion> animationDeath;
+    private EnemyState currentState;
 
     public enum EnemyState {
         MOVING_UP,
@@ -33,7 +28,7 @@ public class Enemy {
         CHASING,
         DODGING,
         FLEEING,
-        DIE,
+        DIE
     }
 
     public Enemy(Vector2 position, float speed, Animation<TextureRegion> animationRight, Animation<TextureRegion> animationLeft,
@@ -56,11 +51,9 @@ public class Enemy {
 
     public float getAngle(Vector2 target) {
         float angle = (float) Math.toDegrees(Math.atan2(target.y - this.position.y, target.x - this.position.x));
-
         if (angle < 0) {
             angle += 360;
         }
-
         return angle;
     }
 
@@ -75,58 +68,67 @@ public class Enemy {
         return false;
     }
 
-    public void update(Vector2 targetPosition) {
+    public void update(TiledMapTileLayer collisionLayer) {
         float dt = Gdx.graphics.getDeltaTime();
         stateTime += dt;
 
+        Vector2 nextPosition = new Vector2(position);
 
-        switch (this.currentState) {
+        switch (currentState) {
             case MOVING_UP:
-                this.position.y += this.speed * dt;
+                nextPosition.y += speed * dt;
                 break;
             case MOVING_DOWN:
-                this.position.y -= this.speed * dt;
+                nextPosition.y -= speed * dt;
                 break;
             case PATROLLING:
-                this.position.x -= this.speed * dt;
+                nextPosition.x -= speed * dt;
                 break;
             case BOOSTING:
-                this.position.x -= this.speed * dt * 5;
-                if (!this.canSeePlayer()) {
-                    this.currentState = EnemyState.PATROLLING;
+                nextPosition.x -= speed * dt * 5;
+                if (!canSeePlayer()) {
+                    currentState = EnemyState.PATROLLING;
                 }
                 break;
             case CHASING:
-                if (this.position.y < game.getPlayerPosition().y)
-                    this.position.y += this.speed * dt;
-                if (this.position.y > game.getPlayerPosition().y)
-                    this.position.y -= this.speed * dt;
-                this.position.x -= this.speed * dt * 3;
-                if (!this.canSeePlayer()) {
-                    this.currentState = EnemyState.PATROLLING;
+                if (nextPosition.y < game.getPlayerPosition().y)
+                    nextPosition.y += speed * dt;
+                if (nextPosition.y > game.getPlayerPosition().y)
+                    nextPosition.y -= speed * dt;
+                nextPosition.x -= speed * dt * 3;
+                if (!canSeePlayer()) {
+                    currentState = EnemyState.PATROLLING;
                 }
                 break;
             case DODGING:
-                if (this.position.y < game.getPlayerPosition().y)
-                    this.position.y -= this.speed * dt * 3;
-                if (this.position.y > game.getPlayerPosition().y)
-                    this.position.y += this.speed * dt * 3;
-                this.position.x -= this.speed * dt;
+                if (nextPosition.y < game.getPlayerPosition().y)
+                    nextPosition.y -= speed * dt * 3;
+                if (nextPosition.y > game.getPlayerPosition().y)
+                    nextPosition.y += speed * dt * 3;
+                nextPosition.x -= speed * dt;
                 break;
             case FLEEING:
-                this.position.x += this.speed * dt * 5;
+                nextPosition.x += speed * dt * 5;
                 break;
             case DIE:
-                this.position.x = 0;
-                this.position.y = 0;
-                this.speed = 0;
+                game.removeEnemy(this);
+                nextPosition.x = 0;
+                nextPosition.y = 0;
+                speed = 0;
+        }
+
+        TiledMapTileLayer.Cell nextCell = collisionLayer.getCell((int) nextPosition.x, (int) nextPosition.y);
+        if (nextCell == null || nextCell.getTile() == null) {
+            position = nextPosition;
+        } else {
+            currentState = EnemyState.PATROLLING;
+            findNewPath(collisionLayer);
         }
     }
 
     public void render(SpriteBatch batch) {
-
         TextureRegion currentFrame;
-        switch (this.currentState) {
+        switch (currentState) {
             case MOVING_UP:
                 currentFrame = animationFront.getKeyFrame(stateTime, true);
                 break;
@@ -138,22 +140,87 @@ public class Enemy {
             case CHASING:
             case DODGING:
             case FLEEING:
-                if (this.position.x > game.getPlayerPosition().x) {
+                if (position.x > game.getPlayerPosition().x) {
                     currentFrame = animationLeft.getKeyFrame(stateTime, true);
                 } else {
                     currentFrame = animationRight.getKeyFrame(stateTime, true);
                 }
                 break;
             case DIE:
-                game.removeEnemy(game.enemy);
                 currentFrame = animationDeath.getKeyFrame(stateTime, true);
                 break;
             default:
                 currentFrame = animationRight.getKeyFrame(stateTime, true);
                 break;
         }
-        batch.draw(currentFrame, this.position.x, this.position.y, currentFrame.getRegionWidth() * 2.5f,
-                (currentFrame.getRegionHeight() * 2.5f));
+
+        Vector3 position3D = new Vector3(position.x, position.y, 0);
+        game.camera.project(position3D);
+
+        batch.draw(currentFrame, position3D.x, position3D.y, currentFrame.getRegionWidth() * 2.5f,
+                currentFrame.getRegionHeight() * 2.5f);
+    }
+
+    private void findNewPath(TiledMapTileLayer collisionLayer) {
+        Vector2 playerPosition = game.getPlayerPosition();
+        float angle = getAngle(playerPosition);
+        if (playerPosition.x < position.x) {
+            if (angle > 170 && angle < 190) {
+                currentState = EnemyState.CHASING;
+            } else {
+                currentState = EnemyState.DODGING;
+            }
+        } else {
+            currentState = EnemyState.FLEEING;
+        }
+        if (currentState == EnemyState.CHASING || currentState == EnemyState.DODGING) {
+            if (position.y > playerPosition.y) {
+                currentState = EnemyState.MOVING_UP;
+            } else {
+                currentState = EnemyState.MOVING_DOWN;
+            }
+        }
+        if (currentState == EnemyState.BOOSTING) {
+            if (position.y > playerPosition.y) {
+                currentState = EnemyState.MOVING_UP;
+            } else {
+                currentState = EnemyState.MOVING_DOWN;
+            }
+        }
+        if (currentState == EnemyState.FLEEING) {
+            if (position.y > playerPosition.y) {
+                currentState = EnemyState.MOVING_UP;
+            } else {
+                currentState = EnemyState.MOVING_DOWN;
+            }
+        }
+        if (currentState == EnemyState.PATROLLING) {
+            if (position.y > playerPosition.y) {
+                currentState = EnemyState.MOVING_UP;
+            } else {
+                currentState = EnemyState.MOVING_DOWN;
+            }
+        }
+        if (currentState == EnemyState.MOVING_UP) {
+            if (position.y > playerPosition.y) {
+                currentState = EnemyState.MOVING_UP;
+            } else {
+                currentState = EnemyState.MOVING_DOWN;
+            }
+        }
+        if (currentState == EnemyState.MOVING_DOWN) {
+            if (position.y > playerPosition.y) {
+                currentState = EnemyState.MOVING_UP;
+            } else {
+                currentState = EnemyState.MOVING_DOWN;
+            }
+        }
+        if (currentState == EnemyState.DIE) {
+            if (position.y > playerPosition.y) {
+                currentState = EnemyState.MOVING_UP;
+            } else {
+                currentState = EnemyState.MOVING_DOWN;
+            }
+        }
     }
 }
-
