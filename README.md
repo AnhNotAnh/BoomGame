@@ -99,11 +99,11 @@ Our game is a thrilling mobile game where players must use bombs to eliminate en
     - Button textures for UI elements.
 
 - **Audio**:
-    - Background music (`background_music.mp3`).
-    - Movement sound (`movement_sound.mp3`).
-    - Bomb placement sound (`place_bomb_sound.mp3`).
-    - Explosion sound (`explosion_sound.mp3`).
-    - Button click sound (`button_click_sound.mp3`).
+    - Background music.
+    - Movement sound.
+    - Bomb placement sound.
+    - Explosion sound.
+    - Button click sound.
 
 ## Future Enhancements
 
