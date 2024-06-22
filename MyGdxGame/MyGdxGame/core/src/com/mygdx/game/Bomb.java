@@ -48,6 +48,9 @@ public class Bomb {
     }
 
     private void explode(TiledMapTileLayer tileLayer) {
+        // Play the explosion sound
+        MyGdxGame.getInstance().getExplosionSound().play();
+
         int[] dx = {0, 1, 0, -1};
         int[] dy = {1, 0, -1, 0};
 
@@ -68,28 +71,26 @@ public class Bomb {
                         if (collisionLayer != null) {
                             collisionLayer.setCell(x, y, null); // Check if collisionLayer is not null before setting cell
                         }
-                    }
-                    else if (tileId == 3) // destroy rock object
+                    } else if (tileId == 3) // destroy rock object
                     {
                         tileLayer.setCell(x, y, null);
                         if (collisionLayer != null) {
                             collisionLayer.setCell(x, y, null); // Check if collisionLayer is not null before setting cell
                         }
-                    }
-                    else if (tileId == 7) // destroy wood object
+                    } else if (tileId == 7) // destroy wood object
                     {
                         tileLayer.setCell(x, y, null);
                         if (collisionLayer != null) {
                             collisionLayer.setCell(x, y, null); // Check if collisionLayer is not null before setting cell
                         }
-                    }
-                    else if (tileId == 1) {
+                    } else if (tileId == 1) {
                         break;
                     }
                 }
             }
         }
     }
+
 
     public void render(SpriteBatch batch) {
         if (!exploded) {
