@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
@@ -19,6 +20,7 @@ import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.graphics.Color;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -120,6 +122,8 @@ public class MyGdxGame extends ApplicationAdapter {
 	private Sound buttonClickSound;
 	private Sound explosionSound;
 
+	private ShapeRenderer shapeRenderer;
+
 	@Override
 	public void create() {
 		// Rendering
@@ -203,6 +207,9 @@ public class MyGdxGame extends ApplicationAdapter {
 		// Play background music
 		backgroundMusic.setLooping(true);
 		backgroundMusic.play();
+
+		//Bounding box
+		this.shapeRenderer = new ShapeRenderer();
 	}
 
 	private void createEnemyAnimations() {
@@ -348,6 +355,25 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 		batch.end();
 
+		//For measuring the bounding box of play, enemy.
+		shapeRenderer.setProjectionMatrix(camera.combined);
+		shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+		shapeRenderer.setColor(Color.RED);
+
+		if (player.getBoundingBox() != null) {
+			shapeRenderer.rect(player.getBoundingBox().x, player.getBoundingBox().y,
+					player.getBoundingBox().width, player.getBoundingBox().height);
+		}
+
+		for (Enemy enemy : enemies) {
+			if (enemy.getBoundingBox() != null) {
+				shapeRenderer.rect(enemy.getBoundingBox().x, enemy.getBoundingBox().y,
+						enemy.getBoundingBox().width, enemy.getBoundingBox().height);
+			}
+		}
+		shapeRenderer.end();
+
+
 		uiBatch.begin();
 		moveLeftButton.draw(uiBatch);
 		moveRightButton.draw(uiBatch);
@@ -355,6 +381,8 @@ public class MyGdxGame extends ApplicationAdapter {
 		moveUpButton.draw(uiBatch);
 		placeBombButton.draw(uiBatch);
 		uiBatch.end();
+
+
 	}
 
 	private void renderGameOver() {
@@ -475,6 +503,8 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		if (player.getCooldown() > 0.0f)
 			player.reduceCooldown(elapsedTime);
+
+
 	}
 
 	private void newGame() {
@@ -496,6 +526,8 @@ public class MyGdxGame extends ApplicationAdapter {
 		enemies.clear();
 		spawnEnemies();
 	}
+
+	
 
 	@Override
 	public void dispose() {

@@ -6,9 +6,10 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
-public class Player {
+public class Player implements CollidableObject{
     private Vector2 position;
     private Vector2 velocity;
     private float movementCooldown;
@@ -37,6 +38,16 @@ public class Player {
     private Animation<TextureRegion> takeOffAnimationFront;
 
     private float stateTime;
+
+    @Override
+    public Rectangle getBoundingBox() {
+        return new Rectangle(this.position.x ,this.position.y,40,50);
+    }
+
+    @Override
+    public void handleCollision() {
+
+    }
 
     public enum State {
         IDLE, WALKING, TAKING_OFF, WINNING, DYING

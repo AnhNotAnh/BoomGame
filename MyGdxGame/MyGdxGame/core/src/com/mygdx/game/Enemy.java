@@ -5,10 +5,11 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
-public class Enemy {
+public class Enemy implements CollidableObject{
     private MyGdxGame game;
     private Vector2 position;
     private float speed = 50f;
@@ -19,6 +20,16 @@ public class Enemy {
     private Animation<TextureRegion> animationBack;
     private Animation<TextureRegion> animationDeath;
     private EnemyState currentState;
+
+    @Override
+    public Rectangle getBoundingBox() {
+        return new Rectangle(this.position.x + 5,this.position.y + 5 ,40,35);
+    }
+
+    @Override
+    public void handleCollision() {
+        //maybe change to state DIE here
+    }
 
     public enum EnemyState {
         MOVING_UP,
