@@ -504,7 +504,10 @@ public class MyGdxGame extends ApplicationAdapter {
 		if (player.getCooldown() > 0.0f)
 			player.reduceCooldown(elapsedTime);
 
-
+		//Different condition like killing certain enemy will change the to secondMap
+		if (player.getPosition().x == 18 && player.getPosition().y == 18) {
+			newMap("map/secondMap.tmx");
+		}
 	}
 
 	private void newGame() {
@@ -527,7 +530,14 @@ public class MyGdxGame extends ApplicationAdapter {
 		spawnEnemies();
 	}
 
-	
+	private void newMap(String mapPath){
+		newGame();
+		if (tiledMap != null) {
+			tiledMap.dispose();
+		}
+		tiledMap = new TmxMapLoader().load(mapPath);
+		tiledMapRenderer = new OrthogonalTiledMapRenderer(tiledMap);
+	}
 
 	@Override
 	public void dispose() {
