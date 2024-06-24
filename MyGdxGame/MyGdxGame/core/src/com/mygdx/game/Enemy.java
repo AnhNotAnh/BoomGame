@@ -26,6 +26,7 @@ public class Enemy implements CollidableObject {
     private EnemyState currentState;
     private float width = 32f;
     private float height = 32f;
+    private Random random;
 
     public Enemy(Vector2 position, float speed, Animation<TextureRegion> animationRight, Animation<TextureRegion> animationLeft,
                  Animation<TextureRegion> animationFront, Animation<TextureRegion> animationBack, Animation<TextureRegion> animationDeath, MyGdxGame game) {
@@ -39,6 +40,7 @@ public class Enemy implements CollidableObject {
         this.stateTime = 0.33f;
         this.currentState = EnemyState.MOVING_RIGHT; // Initial state
         this.game = game;
+        this.random = new Random();
     }
 
     public Vector2 getPosition() {
@@ -72,9 +74,10 @@ public class Enemy implements CollidableObject {
         float dt = Gdx.graphics.getDeltaTime();
         stateTime += dt;
 
-        Vector2 nextPosition = new Vector2(position);
         Vector2 playerPosition = game.player.getPosition();
 
+        // Calculate the next position based on the current state and speed
+        Vector2 nextPosition = new Vector2(position);
         switch (currentState) {
             case MOVING_UP:
                 nextPosition.y += speed * dt;
@@ -90,19 +93,35 @@ public class Enemy implements CollidableObject {
                 break;
             case DIE:
                 game.removeEnemy(this);
-                nextPosition.x = 0;
-                nextPosition.y = 0;
-                speed = 0;
+                return; // Stop further updates for a dying enemy
         }
 
+        // Check collision with walls
         if (!isCollision(nextPosition, collisionLayer)) {
-            position.set(nextPosition);
+            position.set(nextPosition); // Move to the next position if no collision
         } else {
-            // Handle collision
+            // Handle collision by changing direction
             changeDirection(collisionLayer);
-        }
 
-        // Update the enemy's direction based on the player's position
+            // Update position based on the new direction
+            switch (currentState) {
+                case MOVING_UP:
+                    position.y += speed * dt;
+                    break;
+                case MOVING_DOWN:
+                    position.y -= speed * dt;
+                    break;
+                case MOVING_RIGHT:
+                    position.x += speed * dt;
+                    break;
+                case MOVING_LEFT:
+                    position.x -= speed * dt;
+                    break;
+                case DIE:
+                    game.removeEnemy(this);
+                    return; // Stop further updates for a dying enemy
+            }
+        }
         updateDirection(playerPosition);
     }
 
@@ -126,37 +145,58 @@ public class Enemy implements CollidableObject {
     }
 
     private void changeDirection(TiledMapTileLayer collisionLayer) {
-    List<EnemyState> availableDirections = new ArrayList<>();
+        List<EnemyState> availableDirections = new ArrayList<>();
 
-    // Check which directions are available (no collision)
-    for (EnemyState state : EnemyState.values()) {
-        if (state != EnemyState.DIE) {
-            Vector2 nextPosition = new Vector2(position);
-            switch (state) {
-                case MOVING_UP:
-                    nextPosition.y += 1;
-                    break;
-                case MOVING_DOWN:
-                    nextPosition.y -= 1;
-                    break;
-                case MOVING_RIGHT:
-                    nextPosition.x += 1;
-                    break;
-                case MOVING_LEFT:
-                    nextPosition.x -= 1;
-                    break;
+        // Check all possible directions except DIE and current state
+        for (EnemyState state : EnemyState.values()) {
+            if (state != EnemyState.DIE && state != currentState) {
+                Vector2 direction = getDirectionVector(state);
+                Vector2 nextPosition = new Vector2(position).add(direction.scl(speed * Gdx.graphics.getDeltaTime()));
+
+                if (!isCollision(nextPosition, collisionLayer)) {
+                    availableDirections.add(state);
+                }
             }
-            if (!isCollision(nextPosition, collisionLayer)) {
-                availableDirections.add(state);
-            }
+        }
+
+        // Choose a random direction from available directions
+        if (!availableDirections.isEmpty()) {
+            currentState = availableDirections.get(random.nextInt(availableDirections.size()));
+        } else {
+            // If no available directions, stop moving
+            currentState = EnemyState.DIE;
         }
     }
 
-    // If there are available directions, choose one randomly
-    if (!availableDirections.isEmpty()) {
-        currentState = availableDirections.get(new Random().nextInt(availableDirections.size()));
+    private EnemyState getOppositeDirection(EnemyState state) {
+        switch (state) {
+            case MOVING_UP:
+                return EnemyState.MOVING_DOWN;
+            case MOVING_DOWN:
+                return EnemyState.MOVING_UP;
+            case MOVING_RIGHT:
+                return EnemyState.MOVING_LEFT;
+            case MOVING_LEFT:
+                return EnemyState.MOVING_RIGHT;
+            default:
+                return EnemyState.DIE;
+        }
     }
-}
+
+    private Vector2 getDirectionVector(EnemyState state) {
+        switch (state) {
+            case MOVING_UP:
+                return new Vector2(0, 1);
+            case MOVING_DOWN:
+                return new Vector2(0, -1);
+            case MOVING_RIGHT:
+                return new Vector2(1, 0);
+            case MOVING_LEFT:
+                return new Vector2(-1, 0);
+            default:
+                return Vector2.Zero;
+        }
+    }
 
     private boolean isCollision(Vector2 nextPosition, TiledMapTileLayer collisionLayer) {
         int tileX = (int) (nextPosition.x / collisionLayer.getTileWidth());
