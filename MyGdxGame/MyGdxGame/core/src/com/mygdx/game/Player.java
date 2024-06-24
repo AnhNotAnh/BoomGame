@@ -45,8 +45,17 @@ public class Player implements CollidableObject{
     }
 
     @Override
-    public void handleCollision() {
+    public void handleCollision(Vector2 position, float radius) {
+        Vector2 playerPosition = getPosition();
+        float distance = playerPosition.dst(position);
 
+        if (distance <= radius) {
+            currentState = State.DYING;
+            stateTime = 0; // Reset the animation time for the death animation
+            velocity.set(0, 0); // Stop the player's movement
+            movementCooldown = 0; // Reset the movement cooldown
+            bombCooldown = BOMB_COOLDOWN_TIME; // Reset the bomb cooldown
+        }
     }
 
     public enum State {
@@ -121,6 +130,11 @@ public class Player implements CollidableObject{
 
     public Vector2 getPosition() {
         return position;
+    }
+
+    @Override
+    public float getRadius() {
+        return 20f;
     }
 
     public void resetCooldown() {

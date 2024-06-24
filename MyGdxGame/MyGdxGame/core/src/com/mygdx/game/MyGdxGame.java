@@ -266,7 +266,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
 		TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
 
-		Vector2 spawnPosition1 = new Vector2(5, 10);
+		Vector2 spawnPosition1 = new Vector2(1, 18);
 		float worldX1 = spawnPosition1.x * tileLayer.getTileWidth();
 		float worldY1 = spawnPosition1.y * tileLayer.getTileHeight();
 		Vector2 worldSpawnPosition1 = new Vector2(worldX1, worldY1);
