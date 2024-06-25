@@ -266,18 +266,18 @@ public class MyGdxGame extends ApplicationAdapter {
 		MapLayer collisionLayer = tiledMap.getLayers().get("Collision");
 		TiledMapTileLayer tileLayer = (TiledMapTileLayer) collisionLayer;
 
-		Vector2 spawnPosition1 = new Vector2(1, 18);
+		Vector2 spawnPosition1 = new Vector2(5, 18);
 		float worldX1 = spawnPosition1.x * tileLayer.getTileWidth();
 		float worldY1 = spawnPosition1.y * tileLayer.getTileHeight();
 		Vector2 worldSpawnPosition1 = new Vector2(worldX1, worldY1);
-		Enemy enemy1 = new Enemy(worldSpawnPosition1, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
+		Enemy enemy1 = new Enemy(worldSpawnPosition1, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this, player, tileLayer);
 		enemies.add(enemy1);
 
-		Vector2 spawnPosition2 = new Vector2(10, 5);
+		Vector2 spawnPosition2 = new Vector2(9, 5);
 		float worldX2 = spawnPosition2.x * tileLayer.getTileWidth();
 		float worldY2 = spawnPosition2.y * tileLayer.getTileHeight();
 		Vector2 worldSpawnPosition2 = new Vector2(worldX2, worldY2);
-		Enemy enemy2 = new Enemy(worldSpawnPosition2, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
+		Enemy enemy2 = new Enemy(worldSpawnPosition2, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this, player, tileLayer);
 		enemies.add(enemy2);
 	}
 
@@ -467,9 +467,8 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		for (Enemy enemy : enemies) {
 			Vector2 enemyPosition = enemy.getPosition();
-			TiledMapTileLayer collisionLayer = (TiledMapTileLayer) tiledMap.getLayers().get("Collision");
-			enemy.update(collisionLayer);
-
+			enemy.update(elapsedTime);
+			
 			if (enemyPosition.epsilonEquals(player.getPosition(), 0.1f)) {
 				gameState = GameState.GAME_OVER;
 			}

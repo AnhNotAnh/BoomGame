@@ -13,6 +13,7 @@ public class Player implements CollidableObject{
     private Vector2 position;
     private Vector2 velocity;
     private float movementCooldown;
+    private MyGdxGame game;
 
     private Texture deathFront;
     private Texture idleBack;
@@ -201,6 +202,12 @@ public class Player implements CollidableObject{
             bombCooldown -= deltaTime;
         }
 
+        if (game != null && game.enemies != null) {
+            for (Enemy enemy : game.enemies) {
+                handleEnemyCollision(enemy);
+            }
+        }
+
         // Update state based on movement
         if (velocity.x == 0 && velocity.y == 0) {
             currentState = State.IDLE;
@@ -213,6 +220,19 @@ public class Player implements CollidableObject{
             stateTime = 0; // reset animation time
         }
         previousState = currentState;
+    }
+
+    public void handleEnemyCollision(Enemy enemy) {
+        Vector2 enemyPosition = enemy.getPosition();
+        float distance = enemyPosition.dst(position);
+
+        if (distance <= enemy.getRadius() + getRadius()) {
+            currentState = State.DYING;
+            stateTime = 0; // Reset the animation time for the death animation
+            velocity.set(0, 0); // Stop the player's movement
+            movementCooldown = 0; // Reset the movement cooldown
+            bombCooldown = BOMB_COOLDOWN_TIME; // Reset the bomb cooldown
+        }
     }
 
     public void dispose() {

@@ -1,10 +1,6 @@
 package com.mygdx.game;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
-
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -15,6 +11,7 @@ import com.badlogic.gdx.math.Vector3;
 
 public class Enemy implements CollidableObject {
     private MyGdxGame game;
+    private Player player;
     private Vector2 position;
     private float speed;
     private float stateTime;
@@ -27,9 +24,11 @@ public class Enemy implements CollidableObject {
     private float width = 32f;
     private float height = 32f;
     private Random random;
+    private long lastDirectionChangeTime;
+    private TiledMapTileLayer collisionLayer;
 
     public Enemy(Vector2 position, Animation<TextureRegion> animationRight, Animation<TextureRegion> animationLeft,
-                 Animation<TextureRegion> animationFront, Animation<TextureRegion> animationBack, Animation<TextureRegion> animationDeath, MyGdxGame game) {
+                 Animation<TextureRegion> animationFront, Animation<TextureRegion> animationBack, Animation<TextureRegion> animationDeath, MyGdxGame game, Player player, TiledMapTileLayer collisionLayer) {
         this.position = position;
         this.speed = 30f;
         this.animationRight = animationRight;
@@ -41,6 +40,8 @@ public class Enemy implements CollidableObject {
         this.currentState = EnemyState.MOVING_RIGHT; // Initial state
         this.game = game;
         this.random = new Random();
+        this.player = player;
+        this.collisionLayer = collisionLayer;
     }
 
     public Vector2 getPosition() {
@@ -54,7 +55,7 @@ public class Enemy implements CollidableObject {
 
     @Override
     public Rectangle getBoundingBox() {
-        return new Rectangle(this.position.x + 5, this.position.y + 5, 40, 35);
+        return new Rectangle(this.position.x, this.position.y, width, height);
     }
 
     @Override
@@ -70,11 +71,8 @@ public class Enemy implements CollidableObject {
         }
     }
 
-    public void update(TiledMapTileLayer collisionLayer) {
-        float dt = Gdx.graphics.getDeltaTime();
+    public void update(float dt) {
         stateTime += dt;
-
-        Vector2 playerPosition = game.player.getPosition();
 
         // Calculate the next position based on the current state and speed
         Vector2 nextPosition = new Vector2(position);
@@ -96,113 +94,59 @@ public class Enemy implements CollidableObject {
                 return; // Stop further updates for a dying enemy
         }
 
-        // Check collision with walls
-        if (!isCollision(nextPosition, collisionLayer)) {
-            position.set(nextPosition); // Move to the next position if no collision
-        } else {
-            // Handle collision by changing direction
-            changeDirection(collisionLayer);
-
-            // Update position based on the new direction
-            switch (currentState) {
-                case MOVING_UP:
-                    position.y += speed * dt;
-                    break;
-                case MOVING_DOWN:
-                    position.y -= speed * dt;
-                    break;
-                case MOVING_RIGHT:
-                    position.x += speed * dt;
-                    break;
-                case MOVING_LEFT:
-                    position.x -= speed * dt;
-                    break;
-                case DIE:
-                    game.removeEnemy(this);
-                    return; // Stop further updates for a dying enemy
+        // Check if the player is in line of sight
+        if (isPlayerInLineOfSight()){
+            chase(player.getPosition());
+            // Check for collisions with walls
+            if (isCollision(nextPosition, currentState, collisionLayer)) {
+                changeDirectionRandomly();
+            }
+            else{
+                position.set(nextPosition);
             }
         }
-        //updateDirection(playerPosition);
-    }
-
-    private void updateDirection(Vector2 playerPosition) {
-        float dx = playerPosition.x - position.x;
-        float dy = playerPosition.y - position.y;
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-            if (dx > 0) {
-                currentState = EnemyState.MOVING_RIGHT;
-            } else {
-                currentState = EnemyState.MOVING_LEFT;
+        else {
+            if (isCollision(nextPosition, currentState, collisionLayer)) {
+                changeDirectionRandomly();
             }
-        } else {
-            if (dy > 0) {
-                currentState = EnemyState.MOVING_UP;
-            } else {
-                currentState = EnemyState.MOVING_DOWN;
+            else {
+                position.set(nextPosition);
             }
         }
     }
 
-    private void changeDirection(TiledMapTileLayer collisionLayer) {
-        List<EnemyState> availableDirections = new ArrayList<>();
+    private boolean isCollision(Vector2 nextPosition, EnemyState direction, TiledMapTileLayer collisionLayer) {
+        float tileWidth = collisionLayer.getTileWidth();
+        float tileHeight = collisionLayer.getTileHeight();
 
-        // Check all possible directions except DIE and current state
-        for (EnemyState state : EnemyState.values()) {
-            if (state != EnemyState.DIE && state != currentState) {
-                Vector2 direction = getDirectionVector(state);
-                Vector2 nextPosition = new Vector2(position).add(direction.scl(speed * Gdx.graphics.getDeltaTime()));
+        int tileX = (int) (nextPosition.x / tileWidth);
+        int tileY = (int) (nextPosition.y / tileHeight);
 
-                if (!isCollision(nextPosition, collisionLayer)) {
-                    availableDirections.add(state);
-                }
-            }
-        }
-
-        // Choose a random direction from available directions
-        if (!availableDirections.isEmpty()) {
-            currentState = availableDirections.get(random.nextInt(availableDirections.size()));
-        } else {
-            // If no available directions, stop moving
-            currentState = EnemyState.DIE;
-        }
-    }
-
-    private EnemyState getOppositeDirection(EnemyState state) {
-        switch (state) {
+        switch (direction) {
             case MOVING_UP:
-                return EnemyState.MOVING_DOWN;
+                tileY = (int) ((nextPosition.y + height) / tileHeight);
+                break;
             case MOVING_DOWN:
-                return EnemyState.MOVING_UP;
+                tileY = (int) (nextPosition.y / tileHeight);
+                break;
             case MOVING_RIGHT:
-                return EnemyState.MOVING_LEFT;
+                tileX = (int) ((nextPosition.x + width) / tileWidth);
+                break;
             case MOVING_LEFT:
-                return EnemyState.MOVING_RIGHT;
-            default:
-                return EnemyState.DIE;
+                tileX = (int) (nextPosition.x / tileWidth);
+                break;
+            case DIE:
+                // No need to check for collisions when the enemy is dying
+                break;
         }
-    }
 
-    private Vector2 getDirectionVector(EnemyState state) {
-        switch (state) {
-            case MOVING_UP:
-                return new Vector2(0, 1);
-            case MOVING_DOWN:
-                return new Vector2(0, -1);
-            case MOVING_RIGHT:
-                return new Vector2(1, 0);
-            case MOVING_LEFT:
-                return new Vector2(-1, 0);
-            default:
-                return Vector2.Zero;
-        }
-    }
-
-    private boolean isCollision(Vector2 nextPosition, TiledMapTileLayer collisionLayer) {
-        int tileX = (int) (nextPosition.x / collisionLayer.getTileWidth());
-        int tileY = (int) (nextPosition.y / collisionLayer.getTileHeight());
         TiledMapTileLayer.Cell cell = collisionLayer.getCell(tileX, tileY);
         return cell != null && cell.getTile() != null;
+    }
+
+    private void changeDirectionRandomly() {
+        EnemyState[] states = {EnemyState.MOVING_UP, EnemyState.MOVING_DOWN, EnemyState.MOVING_LEFT, EnemyState.MOVING_RIGHT};
+        currentState = states[random.nextInt(states.length)];
     }
 
     public void render(SpriteBatch batch) {
@@ -234,6 +178,34 @@ public class Enemy implements CollidableObject {
 
         batch.draw(currentFrame, position3D.x, position3D.y, currentFrame.getRegionWidth() * 2f,
                 currentFrame.getRegionHeight() * 2f);
+    }
+
+    private boolean isPlayerInLineOfSight() {
+        Vector2 playerPosition = player.getPosition();
+        float distance = position.dst(playerPosition);
+        return distance < 50;
+    }
+
+    public void chase(Vector2 playerPosition) {
+        float dx = playerPosition.x - position.x;
+        float dy = playerPosition.y - position.y;
+
+        if (Math.abs(dx) >= Math.abs(dy)) {
+            if (dx > 0) {
+                currentState = EnemyState.MOVING_RIGHT;
+            } 
+            else {
+                currentState = EnemyState.MOVING_LEFT;
+            }
+        } 
+        else {
+            if (dy > 0) {
+                currentState = EnemyState.MOVING_UP;
+            } 
+            else {
+                currentState = EnemyState.MOVING_DOWN;
+            }
+        }
     }
 
     public enum EnemyState {
