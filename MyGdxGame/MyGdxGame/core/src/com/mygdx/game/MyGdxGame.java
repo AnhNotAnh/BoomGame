@@ -270,14 +270,14 @@ public class MyGdxGame extends ApplicationAdapter {
 		float worldX1 = spawnPosition1.x * tileLayer.getTileWidth();
 		float worldY1 = spawnPosition1.y * tileLayer.getTileHeight();
 		Vector2 worldSpawnPosition1 = new Vector2(worldX1, worldY1);
-		Enemy enemy1 = new Enemy(worldSpawnPosition1, 45f, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
+		Enemy enemy1 = new Enemy(worldSpawnPosition1, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
 		enemies.add(enemy1);
 
 		Vector2 spawnPosition2 = new Vector2(10, 5);
 		float worldX2 = spawnPosition2.x * tileLayer.getTileWidth();
 		float worldY2 = spawnPosition2.y * tileLayer.getTileHeight();
 		Vector2 worldSpawnPosition2 = new Vector2(worldX2, worldY2);
-		Enemy enemy2 = new Enemy(worldSpawnPosition2, 45f, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
+		Enemy enemy2 = new Enemy(worldSpawnPosition2, enemyRightAnimation, enemyLeftAnimation, enemyFrontAnimation, enemyBackAnimation, enemyDeathAnimation, this);
 		enemies.add(enemy2);
 	}
 

@@ -16,7 +16,7 @@ import com.badlogic.gdx.math.Vector3;
 public class Enemy implements CollidableObject {
     private MyGdxGame game;
     private Vector2 position;
-    private float speed = 50f;
+    private float speed;
     private float stateTime;
     private Animation<TextureRegion> animationRight;
     private Animation<TextureRegion> animationLeft;
@@ -28,10 +28,10 @@ public class Enemy implements CollidableObject {
     private float height = 32f;
     private Random random;
 
-    public Enemy(Vector2 position, float speed, Animation<TextureRegion> animationRight, Animation<TextureRegion> animationLeft,
+    public Enemy(Vector2 position, Animation<TextureRegion> animationRight, Animation<TextureRegion> animationLeft,
                  Animation<TextureRegion> animationFront, Animation<TextureRegion> animationBack, Animation<TextureRegion> animationDeath, MyGdxGame game) {
         this.position = position;
-        this.speed = speed;
+        this.speed = 30f;
         this.animationRight = animationRight;
         this.animationLeft = animationLeft;
         this.animationFront = animationFront;
@@ -122,7 +122,7 @@ public class Enemy implements CollidableObject {
                     return; // Stop further updates for a dying enemy
             }
         }
-        updateDirection(playerPosition);
+        //updateDirection(playerPosition);
     }
 
     private void updateDirection(Vector2 playerPosition) {
