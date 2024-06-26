@@ -339,10 +339,16 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		updateGame();
 
+		// Center the camera on the map
+		float mapWidth = ((TiledMapTileLayer) tiledMap.getLayers().get(0)).getWidth() * ((TiledMapTileLayer) tiledMap.getLayers().get(0)).getTileWidth();
+		float mapHeight = ((TiledMapTileLayer) tiledMap.getLayers().get(0)).getHeight() * ((TiledMapTileLayer) tiledMap.getLayers().get(0)).getTileHeight();
+		camera.position.set(mapWidth / 2, mapHeight / 2, 0);
 		camera.update();
+
 		tiledMapRenderer.setView(camera);
 		tiledMapRenderer.render();
 
+		//spriteBatch.setProjectionMatrix(camera.combined);
 		spriteBatch.begin();
 		for (Enemy enemy : enemies) {
 			enemy.render(spriteBatch);
@@ -361,12 +367,10 @@ public class MyGdxGame extends ApplicationAdapter {
 		shapeRenderer.setProjectionMatrix(camera.combined);
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 		shapeRenderer.setColor(Color.RED);
-
 		if (player.getBoundingBox() != null) {
 			shapeRenderer.rect(player.getBoundingBox().x, player.getBoundingBox().y,
 					player.getBoundingBox().width, player.getBoundingBox().height);
 		}
-
 		for (Enemy enemy : enemies) {
 			if (enemy.getBoundingBox() != null) {
 				shapeRenderer.rect(enemy.getBoundingBox().x, enemy.getBoundingBox().y,
@@ -389,9 +393,9 @@ public class MyGdxGame extends ApplicationAdapter {
 			float heartY = Gdx.graphics.getHeight() - 40;
 			uiBatch.draw(heartTexture, heartX, heartY, 32, 32);
 		}
-
 		uiBatch.end();
 	}
+
 
 	private void renderGameOver() {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -499,9 +503,6 @@ public class MyGdxGame extends ApplicationAdapter {
 			}
 		}
 
-		camera.position.set(player.getPosition().x * 32, player.getPosition().y * 32, 0);
-		camera.update();
-
 		player.update(Gdx.graphics.getDeltaTime());
 
 		for (Enemy enemy : enemies) {
@@ -575,9 +576,6 @@ public class MyGdxGame extends ApplicationAdapter {
 
 	private void newGame() {
 		gameState = GameState.PLAYING;
-
-		camera.position.set(16, 16, 0);
-
 		lastTime = System.currentTimeMillis();
 		elapsedTime = 0.0f;
 
