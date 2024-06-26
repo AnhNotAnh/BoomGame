@@ -348,7 +348,7 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
-		player.update(Gdx.graphics.getDeltaTime());
+		//player.update(Gdx.graphics.getDeltaTime());
 		player.render(batch);
 		for (Bomb bomb : bombs) {
 			bomb.render(batch);
@@ -464,6 +464,8 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		camera.position.set(player.getPosition().x * 32, player.getPosition().y * 32, 0);
 		camera.update();
+
+		player.update(Gdx.graphics.getDeltaTime());
 
 		for (Enemy enemy : enemies) {
 			Vector2 enemyPosition = enemy.getPosition();

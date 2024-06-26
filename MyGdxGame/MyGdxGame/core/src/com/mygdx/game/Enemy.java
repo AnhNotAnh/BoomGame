@@ -29,6 +29,8 @@ public class Enemy implements CollidableObject {
     private long lastDirectionChangeTime;
     private TiledMapTileLayer collisionLayer;
 
+    private float frame = 0;
+
     public Enemy(Vector2 position, Animation<TextureRegion> animationRight, Animation<TextureRegion> animationLeft,
                  Animation<TextureRegion> animationFront, Animation<TextureRegion> animationBack, Animation<TextureRegion> animationDeath, MyGdxGame game, Player player, TiledMapTileLayer collisionLayer) {
         this.position = position;
@@ -88,8 +90,14 @@ public class Enemy implements CollidableObject {
                 nextPosition.x -= speed * dt;
                 break;
             case DIE:
+                this.frame += 10 * dt;
+                if (this.frame >= 20) {
+                    this.currentState = EnemyState.DEAD;
+                } // Stop further updates for a dying enemy
+                break;
+            case DEAD:
                 game.removeEnemy(this);
-                return; // Stop further updates for a dying enemy
+                return;
         }
 
         // Check if the player is in line of sight
@@ -136,6 +144,8 @@ public class Enemy implements CollidableObject {
             case DIE:
                 // No need to check for collisions when the enemy is dying
                 break;
+            case DEAD:
+                break;
         }
 
         TiledMapTileLayer.Cell cell = collisionLayer.getCell(tileX, tileY);
@@ -174,8 +184,12 @@ public class Enemy implements CollidableObject {
         Vector3 position3D = new Vector3(position.x, position.y, 0);
         game.camera.project(position3D);
 
-        batch.draw(currentFrame, position3D.x, position3D.y, currentFrame.getRegionWidth() * 2f,
-                currentFrame.getRegionHeight() * 2f);
+        if(currentFrame == null)
+            Gdx.app.log("Enemy", "currentFrame is null for state: " + currentState);
+        else {
+            batch.draw(currentFrame, position3D.x, position3D.y, currentFrame.getRegionWidth() * 2f,
+                    currentFrame.getRegionHeight() * 2f);
+        }
     }
 
     private boolean isPlayerInLineOfSight() {
@@ -211,6 +225,7 @@ public class Enemy implements CollidableObject {
         MOVING_RIGHT,
         MOVING_LEFT,
         MOVING_DOWN,
-        DIE
+        DIE,
+        DEAD
     }
 }
