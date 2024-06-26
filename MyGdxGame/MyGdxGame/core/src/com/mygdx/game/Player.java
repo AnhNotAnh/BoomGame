@@ -64,8 +64,8 @@ public class Player implements CollidableObject {
         this.movementCooldown = 0;
         this.bombCooldown = 0;
         this.lives = 3; // Initialize with 3 lives
-        this.width = 26;
-        this.height = 30;
+        this.width = 32;
+        this.height = 32;
         this.boundingBox = new Rectangle(position.x, position.y, width, height); // No offset
 
         // Load player textures
@@ -129,7 +129,7 @@ public class Player implements CollidableObject {
 
     @Override
     public float getRadius() {
-        return 20f;
+        return Math.max(width, height) / 2;
     }
 
     public void resetCooldown() {
@@ -275,5 +275,13 @@ public class Player implements CollidableObject {
         previousState = State.IDLE;
         this.movementCooldown = 0;
         this.bombCooldown = 0;
+    }
+
+    public float getHeight() {
+        return height;
+    }
+
+    public float getWidth() {
+        return width;
     }
 }

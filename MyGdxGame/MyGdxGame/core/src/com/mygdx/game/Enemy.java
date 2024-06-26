@@ -220,6 +220,15 @@ public class Enemy implements CollidableObject {
         }
     }
 
+
+    public float getHeight() {
+        return height;
+    }
+
+    public float getWidth() {
+        return width;
+    }
+
     public enum EnemyState {
         MOVING_UP,
         MOVING_RIGHT,

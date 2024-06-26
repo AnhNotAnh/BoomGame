@@ -509,9 +509,30 @@ public class MyGdxGame extends ApplicationAdapter {
 			enemy.update(elapsedTime);
 
 			// Check for collision using bounding boxes
-			if (player.getBoundingBox().overlaps(enemy.getBoundingBox())) {
+			/*if (player.getBoundingBox().overlaps(enemy.getBoundingBox())) {
 				player.handleCollision(enemy.getPosition());
+			}*/
+
+			/*if (checkCollision(player, enemy)) {
+				// Handle collision logic here (e.g., player loses a life)
+				player.handleCollision(enemy.getPosition());
+
+			}*/
+
+			float playerRadius = player.getRadius(); // Or player's bounding box size
+			float enemyRadius = enemy.getRadius(); // Or enemy's bounding box size
+
+			// Calculate distance between player and enemy
+			float distance = player.getPosition().dst(enemy.getPosition());
+
+			// Check collision (simplified check)
+			if (distance < playerRadius + enemyRadius) {
+				// Handle collision (e.g., reduce player's lives)
+				player.handleCollision(enemy.getPosition());
+				// Print a message indicating collision
+				Gdx.app.log("Collision", "Player collided with enemy!");
 			}
+
 		}
 
 		if (placeBombButton.isDown && bombCooldown <= 0) {
@@ -617,5 +638,27 @@ public class MyGdxGame extends ApplicationAdapter {
 
 	public Array<Enemy> getEnemies() {
 		return enemies;
+	}
+
+	private boolean checkCollision(Player player, Enemy enemy) {
+		// Get positions and sizes of player and enemy
+		Vector2 playerPosition = player.getPosition();
+		float playerWidth = player.getWidth();
+		float playerHeight = player.getHeight();
+
+		Vector2 enemyPosition = enemy.getPosition();
+		float enemyWidth = enemy.getWidth();
+		float enemyHeight = enemy.getHeight();
+
+		// Simple AABB collision detection
+		if (playerPosition.x < enemyPosition.x + enemyWidth &&
+				playerPosition.x + playerWidth > enemyPosition.x &&
+				playerPosition.y < enemyPosition.y + enemyHeight &&
+				playerPosition.y + playerHeight > enemyPosition.y) {
+			Gdx.app.log("Collision", "Player hitted by enemy");
+			return true; // Collision detected
+		}
+
+		return false; // No collision
 	}
 }
