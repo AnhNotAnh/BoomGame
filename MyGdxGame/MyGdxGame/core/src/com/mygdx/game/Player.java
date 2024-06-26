@@ -66,7 +66,7 @@ public class Player implements CollidableObject {
         this.lives = 3; // Initialize with 3 lives
         this.width = 26;
         this.height = 30;
-        this.boundingBox = new Rectangle(position.x + 100  , position.y + 500 , width, height);
+        this.boundingBox = new Rectangle(position.x, position.y, width, height); // No offset
 
         // Load player textures
         deathFront = new Texture("character/death-front.png");
@@ -98,8 +98,6 @@ public class Player implements CollidableObject {
 
         currentState = State.IDLE;
         previousState = State.IDLE;
-
-
     }
 
     private Animation<TextureRegion> createAnimation(Texture texture, int frameCols, int frameRows) {
@@ -117,10 +115,12 @@ public class Player implements CollidableObject {
     public void move(int moveX, int moveY) {
         this.position.add(moveX, moveY);
         this.movementCooldown = MyGdxGame.MOVEMENT_COOLDOWN_TIME;
+        this.boundingBox.setPosition(position.x, position.y); // Update bounding box position
     }
 
     public void setPosition(Vector2 newPosition) {
         this.position = newPosition;
+        this.boundingBox.setPosition(position.x, position.y); // Update bounding box position
     }
 
     public Vector2 getPosition() {
@@ -203,14 +203,7 @@ public class Player implements CollidableObject {
             bombCooldown -= deltaTime;
         }
 
-        boundingBox.setPosition(position.x, position.y);
-        /*
-        if (game != null && game.enemies != null) {
-            for (Enemy enemy : game.enemies) {
-                handleEnemyCollision(enemy);
-            }
-        }
-        */
+        boundingBox.setPosition(position.x, position.y); // Ensure bounding box is updated
 
         if (this.currentState == State.DYING){
             this.frame += 5 * deltaTime;
@@ -218,8 +211,7 @@ public class Player implements CollidableObject {
                 this.currentState = Player.State.DEAD;
             }
         }
-        if (this.currentState == State.DEAD)
-        {
+        if (this.currentState == State.DEAD) {
             respawn();
         }
         if (lives <= 0) {
@@ -238,34 +230,7 @@ public class Player implements CollidableObject {
             stateTime = 0; // reset animation time
         }
         previousState = currentState;
-
-
-
-
     }
-
-    /*public void handleEnemyCollision(Enemy enemy) {
-        Vector2 enemyPosition = enemy.getPosition();
-        float distance = enemyPosition.dst(position);
-
-        if (distance <= enemy.getRadius() + getRadius()) {
-            currentState = State.DYING;
-            stateTime = 0; // Reset the animation time for the death animation
-            velocity.set(0, 0); // Stop the player's movement
-            movementCooldown = 0; // Reset the movement cooldown
-            bombCooldown = BOMB_COOLDOWN_TIME; // Reset the bomb cooldown
-
-            // Decrease lives
-            lives--;
-            if (lives <= 0) {
-                game.killPlayer(); // Call the method to handle game over
-            } else {
-                // Reset player position if they still have lives
-                setPosition(new Vector2(1, 18));
-            }
-        }
-    }
-    */
 
     public int getLives() {
         return lives;
@@ -300,7 +265,6 @@ public class Player implements CollidableObject {
             bombCooldown = BOMB_COOLDOWN_TIME; // Reset the bomb cooldown
             // Decrease lives
             lives--;
-
         }
     }
 
