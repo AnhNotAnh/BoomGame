@@ -27,7 +27,7 @@ import java.util.Iterator;
 
 public class MyGdxGame extends ApplicationAdapter {
 
-	public enum GameState { MAIN_MENU, PLAYING, GAME_OVER }
+	public enum GameState { MAIN_MENU, PLAYING, GAME_OVER, WIN }
 
 	public static final float FRAME_COLS = 3;
 	public static final float FRAME_COLSDEATH = 5;
@@ -45,8 +45,6 @@ public class MyGdxGame extends ApplicationAdapter {
 	public Sound getExplosionSound() {
 		return explosionSound;
 	}
-
-
 
 	GameState gameState = GameState.MAIN_MENU;
 
@@ -96,6 +94,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	Texture exitButtonTexture;
 	Texture retryButtonTexture;
 	Texture menuButtonTexture;
+	Texture winTexture;
 
 	// UI Buttons
 	Button moveLeftButton;
@@ -153,6 +152,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		exitButtonTexture = new Texture("button/CloseBtn.png");
 		retryButtonTexture = new Texture("button/RestartBtn.png");
 		menuButtonTexture = new Texture("button/MenuBtn.png");
+		winTexture = new Texture("items/win.png"); // Load win texture
 
 		// Initialize buttons
 		float buttonSize = h * 0.2f;
@@ -201,8 +201,6 @@ public class MyGdxGame extends ApplicationAdapter {
 		buttonClickSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/jump.wav"));
 		explosionSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/collision.wav"));
 		instance = this;
-
-
 
 		// Play background music
 		backgroundMusic.setLooping(true);
@@ -298,6 +296,9 @@ public class MyGdxGame extends ApplicationAdapter {
 			case GAME_OVER:
 				renderGameOver();
 				break;
+			case WIN:
+				renderWin();
+				break;
 		}
 	}
 
@@ -348,7 +349,6 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
-		//player.update(Gdx.graphics.getDeltaTime());
 		player.render(batch);
 		for (Bomb bomb : bombs) {
 			bomb.render(batch);
@@ -397,6 +397,35 @@ public class MyGdxGame extends ApplicationAdapter {
 		menuButton.update(checkTouch, touchX, touchY);
 
 		uiBatch.begin();
+		retryButton.draw(uiBatch);
+		menuButton.draw(uiBatch);
+		uiBatch.end();
+
+		if (retryButton.isDown) {
+			Gdx.app.log("Button", "Retry button clicked");
+			buttonClickSound.play();
+			gameState = GameState.PLAYING;
+			newGame();
+		} else if (menuButton.isDown) {
+			Gdx.app.log("Button", "Menu button clicked");
+			buttonClickSound.play();
+			gameState = GameState.MAIN_MENU;
+		}
+	}
+
+	private void renderWin() {
+		Gdx.gl.glClearColor(0, 0, 0, 1);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+		boolean checkTouch = Gdx.input.isTouched();
+		int touchX = Gdx.input.getX();
+		int touchY = Gdx.input.getY();
+
+		retryButton.update(checkTouch, touchX, touchY);
+		menuButton.update(checkTouch, touchX, touchY);
+
+		uiBatch.begin();
+		uiBatch.draw(winTexture, Gdx.graphics.getWidth() / 2 - winTexture.getWidth() / 2, Gdx.graphics.getHeight() / 2 - winTexture.getHeight() / 2);
 		retryButton.draw(uiBatch);
 		menuButton.draw(uiBatch);
 		uiBatch.end();
@@ -470,7 +499,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		for (Enemy enemy : enemies) {
 			Vector2 enemyPosition = enemy.getPosition();
 			enemy.update(elapsedTime);
-			
+
 			if (enemyPosition.epsilonEquals(player.getPosition(), 0.1f)) {
 				gameState = GameState.GAME_OVER;
 			}
@@ -498,17 +527,19 @@ public class MyGdxGame extends ApplicationAdapter {
 			}
 		}
 
-		if (player.getPosition().x == 18 && player.getPosition().y == 1) {
-			gameState = GameState.GAME_OVER;
+		// Check if all enemies are killed
+		if (enemies.size == 0) {
+			// Check the map name property
+			String mapName = tiledMap.getProperties().get("mapName", String.class);
+			if ("secondMap".equals(mapName)) {
+				gameState = GameState.WIN;
+			} else if ("firstMap".equals(mapName)) {
+				newMap("map/secondMap.tmx");
+			}
 		}
 
 		if (player.getCooldown() > 0.0f)
 			player.reduceCooldown(elapsedTime);
-
-		//Different condition like killing certain enemy will change the to secondMap
-		if (player.getPosition().x == 18 && player.getPosition().y == 18) {
-			newMap("map/secondMap.tmx");
-		}
 	}
 
 	private void newGame() {
@@ -550,6 +581,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		exitButtonTexture.dispose();
 		retryButtonTexture.dispose();
 		menuButtonTexture.dispose();
+		winTexture.dispose();
 		tiledMap.dispose();
 		bombTexture.dispose();
 		explosionTexture.dispose();
@@ -571,5 +603,8 @@ public class MyGdxGame extends ApplicationAdapter {
 	public void removeEnemy(Enemy enemy) {
 		enemies.removeValue(enemy, true);
 	}
-	public Array<Enemy> getEnemies(){ return enemies;}
+
+	public Array<Enemy> getEnemies() {
+		return enemies;
+	}
 }
