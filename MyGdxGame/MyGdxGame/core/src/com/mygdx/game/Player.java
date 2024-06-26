@@ -1,5 +1,3 @@
-// src/com/mygdx/game/Player.java
-
 package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Texture;
@@ -9,7 +7,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
-public class Player implements CollidableObject{
+public class Player implements CollidableObject {
     private Vector2 position;
     private Vector2 velocity;
     private float movementCooldown;
@@ -50,13 +48,14 @@ public class Player implements CollidableObject{
     private float bombCooldown;
     private static final float BOMB_COOLDOWN_TIME = 1.0f; // Cooldown time in seconds
 
+    private int lives;
+
     public Player(Vector2 startPosition) {
         this.position = startPosition;
         this.velocity = new Vector2(0, 0);
         this.movementCooldown = 0;
         this.bombCooldown = 0;
-
-
+        this.lives = 3; // Initialize with 3 lives
 
         // Load player textures
         deathFront = new Texture("character/death-front.png");
@@ -176,7 +175,6 @@ public class Player implements CollidableObject{
         velocity.set(x, y);
     }
 
-
     public void update(float deltaTime) {
         stateTime += deltaTime;
         if (bombCooldown > 0) {
@@ -213,7 +211,20 @@ public class Player implements CollidableObject{
             velocity.set(0, 0); // Stop the player's movement
             movementCooldown = 0; // Reset the movement cooldown
             bombCooldown = BOMB_COOLDOWN_TIME; // Reset the bomb cooldown
+
+            // Decrease lives
+            lives--;
+            if (lives <= 0) {
+                game.killPlayer(); // Call the method to handle game over
+            } else {
+                // Reset player position if they still have lives
+                setPosition(new Vector2(1, 18));
+            }
         }
+    }
+
+    public int getLives() {
+        return lives;
     }
 
     public void dispose() {
@@ -232,7 +243,7 @@ public class Player implements CollidableObject{
 
     @Override
     public Rectangle getBoundingBox() {
-        return new Rectangle(this.position.x ,this.position.y,40,50);
+        return new Rectangle(this.position.x, this.position.y, 26, 31);
     }
 
     @Override
@@ -243,6 +254,15 @@ public class Player implements CollidableObject{
             velocity.set(0, 0); // Stop the player's movement
             movementCooldown = 0; // Reset the movement cooldown
             bombCooldown = BOMB_COOLDOWN_TIME; // Reset the bomb cooldown
+
+            // Decrease lives
+            lives--;
+            if (lives <= 0) {
+                game.killPlayer(); // Call the method to handle game over
+            } else {
+                // Reset player position if they still have lives
+                setPosition(new Vector2(1, 18));
+            }
         }
     }
 }
