@@ -36,10 +36,16 @@ public class Player implements CollidableObject {
     private Animation<TextureRegion> winAnimationFront;
     private Animation<TextureRegion> takeOffAnimationFront;
 
+    private Animation<TextureRegion> deathAnimationFront;
+
     private float stateTime;
 
+    private float width;
+    private float height;
+    private Rectangle boundingBox;
+
     public enum State {
-        IDLE, WALKING, TAKING_OFF, WINNING, DYING
+        IDLE, WALKING, TAKING_OFF, WINNING, DYING, DEAD
     }
 
     private State currentState;
@@ -50,12 +56,17 @@ public class Player implements CollidableObject {
 
     private int lives;
 
+    private float frame = 0;
+
     public Player(Vector2 startPosition) {
         this.position = startPosition;
         this.velocity = new Vector2(0, 0);
         this.movementCooldown = 0;
         this.bombCooldown = 0;
         this.lives = 3; // Initialize with 3 lives
+        this.width = 26;
+        this.height = 30;
+        this.boundingBox = new Rectangle(position.x + 100  , position.y + 500 , width, height);
 
         // Load player textures
         deathFront = new Texture("character/death-front.png");
@@ -81,11 +92,14 @@ public class Player implements CollidableObject {
         idleAnimationRight = createAnimation(idleRight, 4, 1);
         winAnimationFront = createAnimation(winFront, 2, 1);
         takeOffAnimationFront = createAnimation(takeOffFront, 2, 1);
+        deathAnimationFront = createAnimation(deathFront, 5, 1);
 
         stateTime = 0f;
 
         currentState = State.IDLE;
         previousState = State.IDLE;
+
+
     }
 
     private Animation<TextureRegion> createAnimation(Texture texture, int frameCols, int frameRows) {
@@ -143,8 +157,10 @@ public class Player implements CollidableObject {
     }
 
     public void render(SpriteBatch batch) {
-        TextureRegion currentFrame = getFrame();
-        batch.draw(currentFrame, position.x * 32, position.y * 32, 32, 32);
+        if(!(getFrame() == null)) {
+            TextureRegion currentFrame = getFrame();
+            batch.draw(currentFrame, position.x * 32, position.y * 32, 32, 32);
+        }
     }
 
     private TextureRegion getFrame() {
@@ -161,6 +177,12 @@ public class Player implements CollidableObject {
                 } else {
                     region = walkAnimationRight.getKeyFrame(stateTime, true);
                 }
+                break;
+            case DYING:
+                region = deathAnimationFront.getKeyFrame(stateTime, true);
+                break;
+            case DEAD:
+                region = null;
                 break;
             case IDLE:
             default:
@@ -181,10 +203,27 @@ public class Player implements CollidableObject {
             bombCooldown -= deltaTime;
         }
 
+        boundingBox.setPosition(position.x, position.y);
+        /*
         if (game != null && game.enemies != null) {
             for (Enemy enemy : game.enemies) {
                 handleEnemyCollision(enemy);
             }
+        }
+        */
+
+        if (this.currentState == State.DYING){
+            this.frame += 5 * deltaTime;
+            if (this.frame >= 20) {
+                this.currentState = Player.State.DEAD;
+            }
+        }
+        if (this.currentState == State.DEAD)
+        {
+            respawn();
+        }
+        if (lives <= 0) {
+            game.killPlayer(); // Call the method to handle game over
         }
 
         // Update state based on movement
@@ -199,9 +238,13 @@ public class Player implements CollidableObject {
             stateTime = 0; // reset animation time
         }
         previousState = currentState;
+
+
+
+
     }
 
-    public void handleEnemyCollision(Enemy enemy) {
+    /*public void handleEnemyCollision(Enemy enemy) {
         Vector2 enemyPosition = enemy.getPosition();
         float distance = enemyPosition.dst(position);
 
@@ -222,6 +265,7 @@ public class Player implements CollidableObject {
             }
         }
     }
+    */
 
     public int getLives() {
         return lives;
@@ -243,7 +287,7 @@ public class Player implements CollidableObject {
 
     @Override
     public Rectangle getBoundingBox() {
-        return new Rectangle(this.position.x, this.position.y, 26, 31);
+        return boundingBox;
     }
 
     @Override
@@ -254,15 +298,18 @@ public class Player implements CollidableObject {
             velocity.set(0, 0); // Stop the player's movement
             movementCooldown = 0; // Reset the movement cooldown
             bombCooldown = BOMB_COOLDOWN_TIME; // Reset the bomb cooldown
-
             // Decrease lives
             lives--;
-            if (lives <= 0) {
-                game.killPlayer(); // Call the method to handle game over
-            } else {
-                // Reset player position if they still have lives
-                setPosition(new Vector2(1, 18));
-            }
+
         }
+    }
+
+    public void respawn(){
+        setPosition(new Vector2(1, 18));
+        stateTime = 0f;
+        currentState = State.IDLE;
+        previousState = State.IDLE;
+        this.movementCooldown = 0;
+        this.bombCooldown = 0;
     }
 }
