@@ -95,6 +95,7 @@ public class MyGdxGame extends ApplicationAdapter {
 	Texture retryButtonTexture;
 	Texture menuButtonTexture;
 	Texture winTexture;
+	Texture heartTexture;
 
 	// UI Buttons
 	Button moveLeftButton;
@@ -153,6 +154,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		retryButtonTexture = new Texture("button/RestartBtn.png");
 		menuButtonTexture = new Texture("button/MenuBtn.png");
 		winTexture = new Texture("items/win.png"); // Load win texture
+		heartTexture = new Texture("items/heart.png"); // Load heart texture
 
 		// Initialize buttons
 		float buttonSize = h * 0.2f;
@@ -373,16 +375,22 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 		shapeRenderer.end();
 
-
+		// Render UI elements (e.g., buttons, player lives)
 		uiBatch.begin();
 		moveLeftButton.draw(uiBatch);
 		moveRightButton.draw(uiBatch);
 		moveDownButton.draw(uiBatch);
 		moveUpButton.draw(uiBatch);
 		placeBombButton.draw(uiBatch);
+
+		// Draw player lives (hearts)
+		for (int i = 0; i < player.getLives(); i++) {
+			float heartX = 20 + i * 40;
+			float heartY = Gdx.graphics.getHeight() - 40;
+			uiBatch.draw(heartTexture, heartX, heartY, 32, 32);
+		}
+
 		uiBatch.end();
-
-
 	}
 
 	private void renderGameOver() {
@@ -500,8 +508,9 @@ public class MyGdxGame extends ApplicationAdapter {
 			Vector2 enemyPosition = enemy.getPosition();
 			enemy.update(elapsedTime);
 
-			if (enemyPosition.epsilonEquals(player.getPosition(), 0.1f)) {
-				gameState = GameState.GAME_OVER;
+			// Check for collision using bounding boxes
+			if (player.getBoundingBox().overlaps(enemy.getBoundingBox())) {
+				player.handleCollision(enemy.getPosition());
 			}
 		}
 
@@ -541,6 +550,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		if (player.getCooldown() > 0.0f)
 			player.reduceCooldown(elapsedTime);
 	}
+
 
 	private void newGame() {
 		gameState = GameState.PLAYING;
@@ -582,6 +592,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		retryButtonTexture.dispose();
 		menuButtonTexture.dispose();
 		winTexture.dispose();
+		heartTexture.dispose();
 		tiledMap.dispose();
 		bombTexture.dispose();
 		explosionTexture.dispose();
