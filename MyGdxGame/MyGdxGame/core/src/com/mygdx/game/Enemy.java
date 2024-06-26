@@ -1,6 +1,8 @@
 package com.mygdx.game;
 
 import java.util.Random;
+
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -59,15 +61,11 @@ public class Enemy implements CollidableObject {
     }
 
     @Override
-    public void handleCollision(Vector2 position, float radius) {
+    public void handleCollision(Vector2 position) {
         if (currentState != EnemyState.DIE) {
-            Vector2 enemyPosition = getPosition();
-            float distance = enemyPosition.dst(position);
-
-            if (distance <= radius) {
-                currentState = EnemyState.DIE;
-                stateTime = 0; // Reset the animation time for the death animation
-            }
+            currentState = EnemyState.DIE;
+            stateTime = 0; // Reset the animation time for the death animation
+            Gdx.app.log("Bomb", "Enemy hit by explosion at position: " + position);
         }
     }
 

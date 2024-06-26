@@ -478,7 +478,7 @@ public class MyGdxGame extends ApplicationAdapter {
 			placeBombSound.play();
 			Vector2 bombPosition = new Vector2(player.getPosition().x, player.getPosition().y);
 			TiledMapTileLayer collisionLayer = (TiledMapTileLayer) tiledMap.getLayers().get("Collision");
-			bombs.add(new Bomb(bombPosition, bombTexture, explosionTexture, BOMB_EXPLOSION_TIME, 0.5f, collisionLayer));
+			bombs.add(new Bomb(bombPosition, bombTexture, explosionTexture, BOMB_EXPLOSION_TIME, 0.5f, collisionLayer, this));
 			bombCooldown = BOMB_COOLDOWN_TIME;
 			placeBombButton.isDown = false;
 		}
@@ -569,4 +569,5 @@ public class MyGdxGame extends ApplicationAdapter {
 	public void removeEnemy(Enemy enemy) {
 		enemies.removeValue(enemy, true);
 	}
+	public Array<Enemy> getEnemies(){ return enemies;}
 }

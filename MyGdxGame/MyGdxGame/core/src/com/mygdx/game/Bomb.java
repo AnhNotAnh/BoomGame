@@ -4,8 +4,10 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.utils.Array;
 
 public class Bomb {
     private Vector2 position;
@@ -17,7 +19,9 @@ public class Bomb {
     private boolean exploded;
     private TiledMapTileLayer collisionLayer;
 
-    public Bomb(Vector2 position, Texture bombTexture, Texture explosionTexture, float explosionTime, float explosionDuration, TiledMapTileLayer collisionLayer) {
+    private MyGdxGame game;
+
+    public Bomb(Vector2 position, Texture bombTexture, Texture explosionTexture, float explosionTime, float explosionDuration, TiledMapTileLayer collisionLayer, MyGdxGame game) {
         this.position = position;
         this.bombTexture = bombTexture;
         this.explosionTexture = explosionTexture;
@@ -26,6 +30,7 @@ public class Bomb {
         this.explosionDuration = explosionDuration;
         this.exploded = false;
         this.collisionLayer = collisionLayer;
+        this.game = game;
     }
 
     public Vector2 getPosition() {
@@ -89,6 +94,7 @@ public class Bomb {
                 }
             }
         }
+        checkEnemyCollisions();
     }
 
 
@@ -104,4 +110,18 @@ public class Bomb {
         bombTexture.dispose();
         explosionTexture.dispose();
     }
+
+    private void checkEnemyCollisions() {
+        // Iterate through the list of enemies in the game
+        Array<Enemy> enemies = MyGdxGame.getInstance().getEnemies();
+        for (Enemy enemy : enemies) {
+            // Check if the enemy's bounding box intersects with the explosion area
+            Rectangle explosionArea = new Rectangle(position.x * 32, position.y * 32, 32, 32);
+            if (enemy.getBoundingBox().overlaps(explosionArea)) {
+                // Kill the enemy
+                enemy.handleCollision(position);
+            }
+        }
+    }
+
 }

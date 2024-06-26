@@ -40,25 +40,6 @@ public class Player implements CollidableObject{
 
     private float stateTime;
 
-    @Override
-    public Rectangle getBoundingBox() {
-        return new Rectangle(this.position.x ,this.position.y,40,50);
-    }
-
-    @Override
-    public void handleCollision(Vector2 position, float radius) {
-        Vector2 playerPosition = getPosition();
-        float distance = playerPosition.dst(position);
-
-        if (distance <= radius) {
-            currentState = State.DYING;
-            stateTime = 0; // Reset the animation time for the death animation
-            velocity.set(0, 0); // Stop the player's movement
-            movementCooldown = 0; // Reset the movement cooldown
-            bombCooldown = BOMB_COOLDOWN_TIME; // Reset the bomb cooldown
-        }
-    }
-
     public enum State {
         IDLE, WALKING, TAKING_OFF, WINNING, DYING
     }
@@ -247,5 +228,21 @@ public class Player implements CollidableObject{
         walkLeft.dispose();
         walkRight.dispose();
         winFront.dispose();
+    }
+
+    @Override
+    public Rectangle getBoundingBox() {
+        return new Rectangle(this.position.x ,this.position.y,40,50);
+    }
+
+    @Override
+    public void handleCollision(Vector2 position) {
+        if (currentState != State.DYING) {
+            currentState = State.DYING;
+            stateTime = 0; // Reset the animation time for the death animation
+            velocity.set(0, 0); // Stop the player's movement
+            movementCooldown = 0; // Reset the movement cooldown
+            bombCooldown = BOMB_COOLDOWN_TIME; // Reset the bomb cooldown
+        }
     }
 }
