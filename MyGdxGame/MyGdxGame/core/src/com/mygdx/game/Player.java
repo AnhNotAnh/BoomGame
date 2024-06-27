@@ -252,7 +252,7 @@ public class Player implements CollidableObject {
 
     @Override
     public Rectangle getBoundingBox() {
-        return boundingBox;
+        return new Rectangle(boundingBox.x * 32, boundingBox.y * 32, boundingBox.width, boundingBox.height);
     }
 
     @Override
