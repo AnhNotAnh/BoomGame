@@ -27,7 +27,8 @@ import java.util.Iterator;
 
 public class MyGdxGame extends ApplicationAdapter {
 
-	public enum GameState { MAIN_MENU, PLAYING, GAME_OVER, WIN }
+	public enum GameState { MAIN_MENU, PLAYING, PAUSED, GAME_OVER, WIN }
+
 
 	public static final float FRAME_COLS = 3;
 	public static final float FRAME_COLSDEATH = 5;
@@ -102,11 +103,16 @@ public class MyGdxGame extends ApplicationAdapter {
 	Button moveRightButton;
 	Button moveDownButton;
 	Button moveUpButton;
-	Button placeBombButton;
+	//Button placeBombButton;
 	Button playButton;
 	Button exitButton;
 	Button retryButton;
 	Button menuButton;
+
+	private Button placeBombButton;
+
+	private Texture pauseButtonTexture;
+	private Button pauseButton;
 
 	// Bomb
 	private Texture bombTexture;
@@ -123,6 +129,8 @@ public class MyGdxGame extends ApplicationAdapter {
 	private Sound explosionSound;
 
 	private ShapeRenderer shapeRenderer;
+	private Texture startScreenTexture;
+	private Texture winScreenTexture;
 
 	@Override
 	public void create() {
@@ -161,23 +169,51 @@ public class MyGdxGame extends ApplicationAdapter {
 			e.printStackTrace();
 		}
 
+		// Load textures for the new place bomb button
+		Texture bombButtonUpTexture = new Texture("Attack.png");
+		Texture bombButtonDownTexture = new Texture("Attack.png");
+
+
+
 		// Initialize buttons
 		float buttonSize = h * 0.2f;
 		moveLeftButton = new Button(0.0f, buttonSize, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
 		moveRightButton = new Button(buttonSize * 2, buttonSize, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
 		moveDownButton = new Button(buttonSize, 0.0f, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
 		moveUpButton = new Button(buttonSize, buttonSize * 2, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
-		placeBombButton = new Button(w - buttonSize, 0, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
+		//placeBombButton = new Button(w - buttonSize, 0, buttonSize, buttonSize, buttonSquareTexture, buttonSquareDownTexture);
 
 		float playButtonWidth = w * 0.1f;
 		float playButtonHeight = h * 0.1f;
 		float centerX = w / 2 - playButtonWidth / 2;
 		float centerY = h / 2;
-		playButton = new Button(centerX, centerY, playButtonWidth, playButtonHeight, playButtonTexture, playButtonTexture);
-		exitButton = new Button(centerX, centerY - playButtonHeight - 20, playButtonWidth, playButtonHeight, exitButtonTexture, exitButtonTexture);
+		playButton = new Button(centerX - playButtonWidth +50, centerY - playButtonHeight - 20, playButtonWidth, playButtonHeight, playButtonTexture, playButtonTexture);
+		exitButton = new Button(centerX + playButtonWidth -50, centerY - playButtonHeight - 20, playButtonWidth, playButtonHeight, exitButtonTexture, exitButtonTexture);
 
-		retryButton = new Button(centerX, centerY, playButtonWidth, playButtonHeight, retryButtonTexture, retryButtonTexture);
-		menuButton = new Button(centerX, centerY - playButtonHeight - 20, playButtonWidth, playButtonHeight, menuButtonTexture, menuButtonTexture);
+		float buttonSpacing = 20; // Space between buttons
+		retryButton = new Button(centerX - playButtonWidth - buttonSpacing / 2, centerY - playButtonHeight - 20, playButtonWidth, playButtonHeight, retryButtonTexture, retryButtonTexture);
+		menuButton = new Button(centerX + buttonSpacing / 2, centerY - playButtonHeight - 20, playButtonWidth, playButtonHeight, menuButtonTexture, menuButtonTexture);
+
+		// Load pause button texture
+		try {
+			pauseButtonTexture = new Texture("PauseBtn.png");
+		} catch (Exception e) {
+			Gdx.app.log("MyGdxGame", "Error loading pause button texture: " + e.getMessage());
+			e.printStackTrace();
+		}
+
+		// Initialize pause button
+		pauseButton = new Button(Gdx.graphics.getWidth() - buttonSize - 10, Gdx.graphics.getHeight() - buttonSize - 10, buttonSize, buttonSize, pauseButtonTexture, pauseButtonTexture);
+		// Load win screen texture
+		try {
+			winScreenTexture = new Texture("items/WinScreen.png");
+		} catch (Exception e) {
+			Gdx.app.log("MyGdxGame", "Error loading win screen texture: " + e.getMessage());
+			e.printStackTrace();
+		}
+
+		// Initialize the place bomb button with image textures
+		placeBombButton = new Button(w - buttonSize - buttonSize, buttonSize, buttonSize, buttonSize, bombButtonUpTexture, bombButtonDownTexture);
 
 		// Player
 		player = new Player(new Vector2(1, 18), this);
@@ -225,6 +261,14 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		// Bounding box
 		this.shapeRenderer = new ShapeRenderer();
+
+		// Load start screen texture
+		try {
+			startScreenTexture = new Texture("StartScreen.png");
+		} catch (Exception e) {
+			Gdx.app.log("MyGdxGame", "Error loading start screen texture: " + e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 
@@ -318,8 +362,15 @@ public class MyGdxGame extends ApplicationAdapter {
 			case WIN:
 				renderWin();
 				break;
+			case PAUSED:
+				// Check for touch input to resume the game
+				if (Gdx.input.isTouched()) {
+					gameState = GameState.PLAYING;
+				}
+				break;
 		}
 	}
+
 
 	private void renderMainMenu() {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -331,6 +382,14 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		playButton.update(checkTouch, touchX, touchY);
 		exitButton.update(checkTouch, touchX, touchY);
+
+		// Draw start screen texture
+		uiBatch.begin();
+		uiBatch.draw(startScreenTexture, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		playButton.draw(uiBatch);
+		exitButton.draw(uiBatch);
+		uiBatch.end();
+
 
 		uiBatch.begin();
 		playButton.draw(uiBatch);
@@ -365,7 +424,6 @@ public class MyGdxGame extends ApplicationAdapter {
 		tiledMapRenderer.setView(camera);
 		tiledMapRenderer.render();
 
-		//spriteBatch.setProjectionMatrix(camera.combined);
 		spriteBatch.begin();
 		for (Enemy enemy : enemies) {
 			enemy.render(spriteBatch);
@@ -380,7 +438,6 @@ public class MyGdxGame extends ApplicationAdapter {
 		}
 		batch.end();
 
-		//For measuring the bounding box of play, enemy.
 		shapeRenderer.setProjectionMatrix(camera.combined);
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 		shapeRenderer.setColor(Color.RED);
@@ -403,15 +460,29 @@ public class MyGdxGame extends ApplicationAdapter {
 		moveDownButton.draw(uiBatch);
 		moveUpButton.draw(uiBatch);
 		placeBombButton.draw(uiBatch);
+		pauseButton.draw(uiBatch);
+
+		// Check for pause button press
+		boolean checkTouch = Gdx.input.isTouched();
+		int touchX = Gdx.input.getX();
+		int touchY = Gdx.input.getY();
+		pauseButton.update(checkTouch, touchX, touchY);
+
+		if (pauseButton.isDown) {
+			Gdx.app.log("Button", "Pause button clicked");
+			buttonClickSound.play();
+			gameState = GameState.PAUSED;
+		}
 
 		// Draw player lives (hearts)
 		for (int i = 0; i < player.getLives(); i++) {
-			float heartX = 20 + i * 40;
-			float heartY = Gdx.graphics.getHeight() - 40;
-			uiBatch.draw(heartTexture, heartX, heartY, 32, 32);
+			float heartX = 200 + i * 150;
+			float heartY = Gdx.graphics.getHeight() - 150;
+			uiBatch.draw(heartTexture, heartX, heartY, 100, 100);
 		}
 		uiBatch.end();
 	}
+
 
 
 	private void renderGameOver() {
@@ -467,6 +538,15 @@ public class MyGdxGame extends ApplicationAdapter {
 	}
 
 	private void updateGame() {
+
+		if (gameState == GameState.PAUSED) {
+			// Check for touch input to resume the game
+			if (Gdx.input.isTouched()) {
+				gameState = GameState.PLAYING;
+			}
+			return; // Do nothing else if the game is paused
+		}
+
 		boolean checkTouch = Gdx.input.isTouched();
 		int touchX = Gdx.input.getX();
 		int touchY = Gdx.input.getY();
@@ -619,6 +699,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		movementSound.dispose();
 		placeBombSound.dispose();
 		buttonClickSound.dispose();
+		pauseButtonTexture.dispose();
 	}
 
 	public Vector2 getPlayerPosition() {
