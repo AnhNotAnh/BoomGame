@@ -1,5 +1,6 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -54,11 +55,11 @@ public class Player implements CollidableObject {
     private float bombCooldown;
     private static final float BOMB_COOLDOWN_TIME = 1.0f; // Cooldown time in seconds
 
-    private int lives;
+    int lives;
 
     private float frame = 0;
 
-    public Player(Vector2 startPosition) {
+    public Player(Vector2 startPosition, MyGdxGame game) {
         this.position = startPosition;
         this.velocity = new Vector2(0, 0);
         this.movementCooldown = 0;
@@ -67,19 +68,25 @@ public class Player implements CollidableObject {
         this.width = 32;
         this.height = 32;
         this.boundingBox = new Rectangle(position.x, position.y, width, height); // No offset
+        this.game = game; // Initialize the game reference
 
         // Load player textures
-        deathFront = new Texture("character/death-front.png");
-        idleBack = new Texture("character/idle-back.png");
-        idleFront = new Texture("character/idle-front.png");
-        idleLeft = new Texture("character/idle-left.png");
-        idleRight = new Texture("character/idle-right.png");
-        takeOffFront = new Texture("character/take-off-front.png");
-        walkBack = new Texture("character/walk-back.png");
-        walkFront = new Texture("character/walk-front.png");
-        walkLeft = new Texture("character/walk-left.png");
-        walkRight = new Texture("character/walk-right.png");
-        winFront = new Texture("character/win-front.png");
+        try {
+            deathFront = new Texture("character/death-front.png");
+            idleBack = new Texture("character/idle-back.png");
+            idleFront = new Texture("character/idle-front.png");
+            idleLeft = new Texture("character/idle-left.png");
+            idleRight = new Texture("character/idle-right.png");
+            takeOffFront = new Texture("character/take-off-front.png");
+            walkBack = new Texture("character/walk-back.png");
+            walkFront = new Texture("character/walk-front.png");
+            walkLeft = new Texture("character/walk-left.png");
+            walkRight = new Texture("character/walk-right.png");
+            winFront = new Texture("character/win-front.png");
+        } catch (Exception e) {
+            Gdx.app.log("Player", "Error loading textures: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         // Create animations
         walkAnimationFront = createAnimation(walkFront, 4, 1);
@@ -99,6 +106,8 @@ public class Player implements CollidableObject {
         currentState = State.IDLE;
         previousState = State.IDLE;
     }
+
+
 
     private Animation<TextureRegion> createAnimation(Texture texture, int frameCols, int frameRows) {
         TextureRegion[][] tmp = TextureRegion.split(texture, texture.getWidth() / frameCols, texture.getHeight() / frameRows);
@@ -265,8 +274,14 @@ public class Player implements CollidableObject {
             bombCooldown = BOMB_COOLDOWN_TIME; // Reset the bomb cooldown
             // Decrease lives
             lives--;
+            if (lives <= 0) {
+                game.killPlayer(); // Call the method to handle game over
+            } else {
+                respawn(); // Reset player position if they still have lives
+            }
         }
     }
+
 
     public void respawn(){
         setPosition(new Vector2(1, 18));

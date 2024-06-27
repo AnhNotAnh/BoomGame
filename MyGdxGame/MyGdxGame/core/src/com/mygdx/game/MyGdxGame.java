@@ -145,16 +145,21 @@ public class MyGdxGame extends ApplicationAdapter {
 		camera.update();
 
 		// Textures
-		buttonSquareTexture = new Texture("button/buttonSquare_blue.png");
-		buttonSquareDownTexture = new Texture("button/buttonSquare_beige_pressed.png");
-		buttonLongTexture = new Texture("button/buttonLong_blue.png");
-		buttonLongDownTexture = new Texture("button/buttonLong_beige_pressed.png");
-		playButtonTexture = new Texture("button/PlayBtn.png");
-		exitButtonTexture = new Texture("button/CloseBtn.png");
-		retryButtonTexture = new Texture("button/RestartBtn.png");
-		menuButtonTexture = new Texture("button/MenuBtn.png");
-		winTexture = new Texture("items/win.png"); // Load win texture
-		heartTexture = new Texture("items/heart.png"); // Load heart texture
+		try {
+			buttonSquareTexture = new Texture("button/buttonSquare_blue.png");
+			buttonSquareDownTexture = new Texture("button/buttonSquare_beige_pressed.png");
+			buttonLongTexture = new Texture("button/buttonLong_blue.png");
+			buttonLongDownTexture = new Texture("button/buttonLong_beige_pressed.png");
+			playButtonTexture = new Texture("button/PlayBtn.png");
+			exitButtonTexture = new Texture("button/CloseBtn.png");
+			retryButtonTexture = new Texture("button/RestartBtn.png");
+			menuButtonTexture = new Texture("button/MenuBtn.png");
+			winTexture = new Texture("items/win.png");
+			heartTexture = new Texture("items/heart.png");
+		} catch (Exception e) {
+			Gdx.app.log("MyGdxGame", "Error loading textures: " + e.getMessage());
+			e.printStackTrace();
+		}
 
 		// Initialize buttons
 		float buttonSize = h * 0.2f;
@@ -175,11 +180,16 @@ public class MyGdxGame extends ApplicationAdapter {
 		menuButton = new Button(centerX, centerY - playButtonHeight - 20, playButtonWidth, playButtonHeight, menuButtonTexture, menuButtonTexture);
 
 		// Player
-		player = new Player(new Vector2(1, 18));
+		player = new Player(new Vector2(1, 18), this);
 
 		// Bomb
-		bombTexture = new Texture("items/bomb.png");
-		explosionTexture = new Texture("fxs/explosion.png");
+		try {
+			bombTexture = new Texture("items/bomb.png");
+			explosionTexture = new Texture("fxs/explosion.png");
+		} catch (Exception e) {
+			Gdx.app.log("MyGdxGame", "Error loading bomb/explosion textures: " + e.getMessage());
+			e.printStackTrace();
+		}
 		bombs = new ArrayList<>();
 		bombCooldown = 0;
 
@@ -197,20 +207,27 @@ public class MyGdxGame extends ApplicationAdapter {
 		stateTime = 0.0f;
 
 		// Load sounds and music
-		backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("Sounds/background1.mp3"));
-		movementSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/blink.wav"));
-		placeBombSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/shoot.wav"));
-		buttonClickSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/jump.wav"));
-		explosionSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/collision.wav"));
+		try {
+			backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("Sounds/background1.mp3"));
+			movementSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/blink.wav"));
+			placeBombSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/shoot.wav"));
+			buttonClickSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/jump.wav"));
+			explosionSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/collision.wav"));
+		} catch (Exception e) {
+			Gdx.app.log("MyGdxGame", "Error loading sounds: " + e.getMessage());
+			e.printStackTrace();
+		}
 		instance = this;
 
 		// Play background music
 		backgroundMusic.setLooping(true);
 		backgroundMusic.play();
 
-		//Bounding box
+		// Bounding box
 		this.shapeRenderer = new ShapeRenderer();
 	}
+
+
 
 	private void createEnemyAnimations() {
 		enemyFlyRight = new Texture(Gdx.files.internal("enemies/fly-right.png"));
@@ -406,22 +423,17 @@ public class MyGdxGame extends ApplicationAdapter {
 		int touchY = Gdx.input.getY();
 
 		retryButton.update(checkTouch, touchX, touchY);
-		menuButton.update(checkTouch, touchX, touchY);
+		//menuButton.update(checkTouch, touchX, touchY);
 
 		uiBatch.begin();
 		retryButton.draw(uiBatch);
-		menuButton.draw(uiBatch);
+		//menuButton.draw(uiBatch);
 		uiBatch.end();
 
 		if (retryButton.isDown) {
 			Gdx.app.log("Button", "Retry button clicked");
 			buttonClickSound.play();
-			gameState = GameState.PLAYING;
 			newGame();
-		} else if (menuButton.isDown) {
-			Gdx.app.log("Button", "Menu button clicked");
-			buttonClickSound.play();
-			gameState = GameState.MAIN_MENU;
 		}
 	}
 
@@ -503,6 +515,9 @@ public class MyGdxGame extends ApplicationAdapter {
 			}
 		}
 
+		camera.position.set(player.getPosition().x * 32, player.getPosition().y * 32, 0);
+		camera.update();
+
 		player.update(Gdx.graphics.getDeltaTime());
 
 		for (Enemy enemy : enemies) {
@@ -510,30 +525,9 @@ public class MyGdxGame extends ApplicationAdapter {
 			enemy.update(elapsedTime);
 
 			// Check for collision using bounding boxes
-			/*if (player.getBoundingBox().overlaps(enemy.getBoundingBox())) {
+			if (player.getBoundingBox().overlaps(enemy.getBoundingBox())) {
 				player.handleCollision(enemy.getPosition());
-			}*/
-
-			/*if (checkCollision(player, enemy)) {
-				// Handle collision logic here (e.g., player loses a life)
-				player.handleCollision(enemy.getPosition());
-
-			}*/
-
-			float playerRadius = player.getRadius(); // Or player's bounding box size
-			float enemyRadius = enemy.getRadius(); // Or enemy's bounding box size
-
-			// Calculate distance between player and enemy
-			float distance = player.getPosition().dst(enemy.getPosition());
-
-			// Check collision (simplified check)
-			if (distance < playerRadius + enemyRadius) {
-				// Handle collision (e.g., reduce player's lives)
-				player.handleCollision(enemy.getPosition());
-				// Print a message indicating collision
-				Gdx.app.log("Collision", "Player collided with enemy!");
 			}
-
 		}
 
 		if (placeBombButton.isDown && bombCooldown <= 0) {
@@ -574,12 +568,17 @@ public class MyGdxGame extends ApplicationAdapter {
 	}
 
 
+
 	private void newGame() {
 		gameState = GameState.PLAYING;
+
+		camera.position.set(16, 16, 0);
+
 		lastTime = System.currentTimeMillis();
 		elapsedTime = 0.0f;
 
 		player.setPosition(new Vector2(1, 18));
+		player.lives = 3; // Reset player lives
 		movementCooldown = 0.0f;
 
 		camera.translate(player.getPosition().x * 32, player.getPosition().y * 32);
@@ -590,6 +589,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		enemies.clear();
 		spawnEnemies();
 	}
+
 
 	private void newMap(String mapPath){
 		newGame();
