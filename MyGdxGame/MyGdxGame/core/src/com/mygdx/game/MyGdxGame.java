@@ -476,7 +476,7 @@ public class MyGdxGame extends ApplicationAdapter {
 
 		// Draw player lives (hearts)
 		for (int i = 0; i < player.getLives(); i++) {
-			float heartX = 200 + i * 150;
+			float heartX = i * 150;
 			float heartY = Gdx.graphics.getHeight() - 150;
 			uiBatch.draw(heartTexture, heartX, heartY, 100, 100);
 		}
@@ -595,9 +595,6 @@ public class MyGdxGame extends ApplicationAdapter {
 			}
 		}
 
-		camera.position.set(player.getPosition().x * 32, player.getPosition().y * 32, 0);
-		camera.update();
-
 		player.update(Gdx.graphics.getDeltaTime());
 
 		for (Enemy enemy : enemies) {
@@ -651,21 +648,13 @@ public class MyGdxGame extends ApplicationAdapter {
 
 	private void newGame() {
 		gameState = GameState.PLAYING;
-
-		camera.position.set(16, 16, 0);
-
 		lastTime = System.currentTimeMillis();
 		elapsedTime = 0.0f;
-
 		player.setPosition(new Vector2(1, 18));
 		player.lives = 3; // Reset player lives
 		movementCooldown = 0.0f;
-
-		camera.translate(player.getPosition().x * 32, player.getPosition().y * 32);
-
 		bombs.clear();
 		bombCooldown = 0;
-
 		enemies.clear();
 		spawnEnemies();
 	}
@@ -719,25 +708,4 @@ public class MyGdxGame extends ApplicationAdapter {
 		return enemies;
 	}
 
-	private boolean checkCollision(Player player, Enemy enemy) {
-		// Get positions and sizes of player and enemy
-		Vector2 playerPosition = player.getPosition();
-		float playerWidth = player.getWidth();
-		float playerHeight = player.getHeight();
-
-		Vector2 enemyPosition = enemy.getPosition();
-		float enemyWidth = enemy.getWidth();
-		float enemyHeight = enemy.getHeight();
-
-		// Simple AABB collision detection
-		if (playerPosition.x < enemyPosition.x + enemyWidth &&
-				playerPosition.x + playerWidth > enemyPosition.x &&
-				playerPosition.y < enemyPosition.y + enemyHeight &&
-				playerPosition.y + playerHeight > enemyPosition.y) {
-			Gdx.app.log("Collision", "Player hitted by enemy");
-			return true; // Collision detected
-		}
-
-		return false; // No collision
-	}
 }
