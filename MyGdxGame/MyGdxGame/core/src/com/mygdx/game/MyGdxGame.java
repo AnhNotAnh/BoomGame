@@ -520,7 +520,7 @@ public class MyGdxGame extends ApplicationAdapter {
 		menuButton.update(checkTouch, touchX, touchY);
 
 		uiBatch.begin();
-		uiBatch.draw(winTexture, Gdx.graphics.getWidth() / 2 - winTexture.getWidth() / 2, Gdx.graphics.getHeight() / 2 - winTexture.getHeight() / 2);
+		uiBatch.draw(winTexture, Gdx.graphics.getWidth() / 2 - winTexture.getWidth() / 2, Gdx.graphics.getHeight() / 2 - winTexture.getHeight() / 2 + 120);
 		retryButton.draw(uiBatch);
 		menuButton.draw(uiBatch);
 		uiBatch.end();
