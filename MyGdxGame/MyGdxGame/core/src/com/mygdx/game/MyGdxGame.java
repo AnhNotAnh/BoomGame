@@ -691,10 +691,6 @@ public class MyGdxGame extends ApplicationAdapter {
 		pauseButtonTexture.dispose();
 	}
 
-	public Vector2 getPlayerPosition() {
-		return player.getPosition();
-	}
-
 	public void killPlayer() {
 		gameState = GameState.GAME_OVER;
 		player.setPosition(new Vector2(1, 18));
